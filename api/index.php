@@ -1,14 +1,12 @@
 <?php
 
-/**
- * Laravel - A PHP Framework For Web Artisans
- *
- * @package  Laravel
- * @author   Taylor Otwell <taylor@laravel.com>
- */
+// Load Composer autoloader
+require_once __DIR__.'/../vendor/autoload.php';
 
+// Load Laravel application
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
+// Create kernel and handle request
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
 $response = $kernel->handle(
