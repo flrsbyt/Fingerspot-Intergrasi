@@ -561,11 +561,33 @@
         </h6>
 
         <div class="row g-3 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-2">
                 <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">PIN *</label>
                 <input type="text" id="registerPin" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" placeholder="Contoh: 1" required>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Nama Lengkap *</label>
+                <input type="text" id="registerName" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" placeholder="Nama karyawan" required>
+            </div>
+            <div class="col-md-2">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Tipe Biometrik *</label>
+                <select id="registerVerification" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" required>
+                    <option value="">-- Pilih --</option>
+                    <option value="0">Sidik Jari - Telunjuk</option>
+                    <option value="1">Sidik Jari - Jari 1</option>
+                    <option value="2">Sidik Jari - Jari 2</option>
+                    <option value="3">Sidik Jari - Jari 3</option>
+                    <option value="4">Sidik Jari - Jari 4</option>
+                    <option value="5">Sidik Jari - Jari 5</option>
+                    <option value="6">Sidik Jari - Jari 6</option>
+                    <option value="7">Sidik Jari - Jari 7</option>
+                    <option value="8">Sidik Jari - Jari 8</option>
+                    <option value="9">Sidik Jari - Jari 9</option>
+                    <option value="12">Wajah</option>
+                    <option value="13">Vein</option>
+                </select>
+            </div>
+            <div class="col-md-3">
                 <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Mesin *</label>
                 <select id="registerDevice" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" required>
                     <option value="">-- Pilih Mesin --</option>
@@ -577,7 +599,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
                 <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">&nbsp;</label>
                 <button type="button" class="btn-custom btn-custom-success w-100" onclick="registerOnline(this)">
                     <i class="fas fa-user-plus"></i> Register
@@ -795,9 +817,11 @@ function restartMesin(btn) {
 // 5. Register Online
 function registerOnline(btn) {
     const pin = document.getElementById('registerPin').value;
+    const name = document.getElementById('registerName').value;
+    const verification = document.getElementById('registerVerification').value;
     const device = document.getElementById('registerDevice').value;
     
-    if (!pin || !device) {
+    if (!pin || !name || !verification || !device) {
         showToast('⚠️ Semua field wajib diisi!', 'warning');
         return;
     }
@@ -812,13 +836,15 @@ function registerOnline(btn) {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
         },
-        body: JSON.stringify({ device: device, pin: pin })
+        body: JSON.stringify({ device: device, pin: pin, name: name, verification: verification })
     })
     .then(response => response.json())
     .then(result => {
         if (result.success) {
             showToast('✅ ' + result.message, 'success');
             document.getElementById('registerPin').value = '';
+            document.getElementById('registerName').value = '';
+            document.getElementById('registerVerification').value = '';
         } else {
             showToast('❌ ' + result.message, 'error');
         }

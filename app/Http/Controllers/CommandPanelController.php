@@ -347,6 +347,8 @@ class CommandPanelController extends Controller
         $cloudId = $request->input('device');
         $data = [
             'pin' => $request->input('pin'),
+            'name' => $request->input('name'),
+            'verification' => $request->input('verification'),
         ];
 
         if (empty($cloudId)) {
@@ -356,10 +358,10 @@ class CommandPanelController extends Controller
             ]);
         }
 
-        if (empty($data['pin'])) {
+        if (empty($data['pin']) || empty($data['name']) || empty($data['verification'])) {
             return response()->json([
                 'success' => false,
-                'message' => '❌ PIN wajib diisi'
+                'message' => '❌ PIN, Nama, dan Tipe Biometrik wajib diisi'
             ]);
         }
 
