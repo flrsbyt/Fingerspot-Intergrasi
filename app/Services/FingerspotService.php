@@ -216,7 +216,16 @@ class FingerspotService
             }
         }
 
-        return $this->sendRequest($cloudId, 'register_online', $data);
+        $result = $this->sendRequest($cloudId, 'register_online', $data);
+        
+        // Log raw response untuk debugging
+        \Log::info('Register Online Raw Response', [
+            'cloud_id' => $cloudId,
+            'data' => $data,
+            'result' => $result,
+        ]);
+        
+        return $result;
     }
 
 
