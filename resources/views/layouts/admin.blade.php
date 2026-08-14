@@ -412,8 +412,7 @@
             <div class="col-md-10 main-content">
                 <!-- Topbar -->
                 <nav class="topbar">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <div id="realtime-clock" style="font-weight: 600; color: #6B7280; font-size: 0.9rem;"></div>
+                    <div class="d-flex justify-content-end align-items-center">
                         <div class="dropdown">
                             <div class="user-profile" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 <div class="user-avatar">
@@ -446,6 +445,11 @@
                 </nav>
 
                 <div class="content-wrapper">
+                    <!-- Realtime Clock -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div id="realtime-clock" style="font-weight: 600; color: #6B7280; font-size: 1rem;"></div>
+                    </div>
+                    
                     @if(session('message'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             {{ session('message') }}
