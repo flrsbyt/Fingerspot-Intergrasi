@@ -91,16 +91,42 @@ class CommandPanelController extends Controller
             'response' => $result,
         ]);
 
+        // Log detailed response for debugging
+        \Log::info('Get Userinfo Result', [
+            'cloud_id' => $cloudId,
+            'success' => $result['success'] ?? false,
+            'status_code' => $result['status_code'] ?? null,
+            'data' => $result['data'] ?? null,
+            'raw' => $result['raw'] ?? null,
+        ]);
+
+        // API mengembalikan success tapi data dikirim via webhook
+        if ($result['success']) {
+            CommandLog::create([
+                'command' => 'Get Userinfo',
+                'parameters' => array_merge(['cloud_id' => $cloudId], $params),
+                'status' => 'executed',
+                'message' => 'Permintaan berhasil dikirim. Data user akan dikirim via webhook.',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => '✅ Permintaan berhasil dikirim. Data user akan dikirim via webhook ke sistem secara otomatis.',
+                'data' => $result,
+                'note' => 'Data akan muncul di halaman Data Userinfo setelah diterima via webhook.',
+            ]);
+        }
+
         CommandLog::create([
             'command' => 'Get Userinfo',
             'parameters' => array_merge(['cloud_id' => $cloudId], $params),
-            'status' => $result['success'] ? 'executed' : 'failed',
-            'message' => $result['success'] ? 'Berhasil mengambil data user' : 'Gagal mengambil data user',
+            'status' => 'failed',
+            'message' => 'Gagal mengirim permintaan: ' . ($result['message'] ?? 'Unknown error'),
         ]);
 
         return response()->json([
-            'success' => $result['success'],
-            'message' => $result['success'] ? '✅ Data user berhasil diambil' : '❌ Gagal mengambil data user',
+            'success' => false,
+            'message' => '❌ Gagal mengirim permintaan: ' . ($result['message'] ?? 'Unknown error'),
             'data' => $result
         ]);
     }
@@ -243,86 +269,34 @@ class CommandPanelController extends Controller
             'raw' => $result['raw'] ?? null,
         ]);
 
-        // Proses dan simpan data PIN ke database lokal
-        $savedCount = 0;
-        $updatedCount = 0;
-        $pinCount = 0;
-        
+        // API mengembalikan success tapi data dikirim via webhook
         if ($result['success']) {
-            // Cek format response API - handle multiple possible formats
-            $pinData = null;
-            
-            if (isset($result['data']['data']) && is_array($result['data']['data'])) {
-                $pinData = $result['data']['data'];
-            } elseif (isset($result['data']) && is_array($result['data'])) {
-                $pinData = $result['data'];
-            } elseif (isset($result['data']['Data']) && is_array($result['data']['Data'])) {
-                $pinData = $result['data']['Data'];
-            }
-            
-            if ($pinData) {
-                $pinCount = count($pinData);
-                
-                foreach ($pinData as $pin) {
-                    // Extract PIN dari data
-                    $pinValue = is_array($pin) ? ($pin['pin'] ?? $pin['PIN'] ?? $pin['Pin'] ?? null) : $pin;
-                    
-                    if ($pinValue) {
-                        // Cek apakah sudah ada
-                        $existing = \App\Models\Userinfo::where('pin', $pinValue)->first();
-                        
-                        if ($existing) {
-                            $updatedCount++;
-                        } else {
-                            \App\Models\Userinfo::create([
-                                'pin' => $pinValue,
-                                'name' => is_array($pin) ? ($pin['name'] ?? $pin['NAME'] ?? $pin['Name'] ?? 'User ' . $pinValue) : 'User ' . $pinValue,
-                                'department' => null,
-                                'position' => null,
-                                'card_number' => null,
-                            ]);
-                            $savedCount++;
-                        }
-                    }
-                }
-            } else {
-                // API mengembalikan success tapi tanpa data PIN
-                $message = "API mengembalikan success tanpa data PIN. Response: " . json_encode($result['data']);
-                
-                CommandLog::create([
-                    'command' => 'Get All PIN',
-                    'parameters' => ['cloud_id' => $cloudId],
-                    'status' => 'executed',
-                    'message' => $message,
-                ]);
+            CommandLog::create([
+                'command' => 'Get All PIN',
+                'parameters' => ['cloud_id' => $cloudId],
+                'status' => 'executed',
+                'message' => 'Permintaan berhasil dikirim. Data PIN akan dikirim via webhook.',
+            ]);
 
-                return response()->json([
-                    'success' => true,
-                    'message' => '⚠️ ' . $message,
-                    'data' => $result,
-                    'note' => 'PIN data akan dikirim via webhook jika ada user terdaftar di mesin',
-                ]);
-            }
+            return response()->json([
+                'success' => true,
+                'message' => '✅ Permintaan berhasil dikirim. Data PIN akan dikirim via webhook ke sistem secara otomatis.',
+                'data' => $result,
+                'note' => 'Data akan muncul di halaman Data Userinfo setelah diterima via webhook.',
+            ]);
         }
 
         CommandLog::create([
             'command' => 'Get All PIN',
             'parameters' => ['cloud_id' => $cloudId],
-            'status' => $result['success'] ? 'executed' : 'failed',
-            'message' => $result['success'] 
-                ? "Berhasil mengambil semua PIN. Total: {$pinCount}, Baru: {$savedCount}, Update: {$updatedCount}" 
-                : 'Gagal mengambil semua PIN: ' . ($result['message'] ?? 'Unknown error'),
+            'status' => 'failed',
+            'message' => 'Gagal mengirim permintaan: ' . ($result['message'] ?? 'Unknown error'),
         ]);
 
         return response()->json([
-            'success' => $result['success'],
-            'message' => $result['success'] 
-                ? "✅ Semua PIN berhasil diambil. Total: {$pinCount}, Baru: {$savedCount}, Update: {$updatedCount}" 
-                : '❌ Gagal mengambil PIN: ' . ($result['message'] ?? 'Unknown error'),
+            'success' => false,
+            'message' => '❌ Gagal mengirim permintaan: ' . ($result['message'] ?? 'Unknown error'),
             'data' => $result,
-            'saved_count' => $savedCount,
-            'updated_count' => $updatedCount,
-            'total_count' => $pinCount,
         ]);
     }
 
@@ -373,13 +347,19 @@ class CommandPanelController extends Controller
         $cloudId = $request->input('device');
         $data = [
             'pin' => $request->input('pin'),
-            'name' => $request->input('name'),
         ];
 
         if (empty($cloudId)) {
             return response()->json([
                 'success' => false,
                 'message' => '❌ Mesin absensi wajib dipilih'
+            ]);
+        }
+
+        if (empty($data['pin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => '❌ PIN wajib diisi'
             ]);
         }
 
@@ -397,16 +377,42 @@ class CommandPanelController extends Controller
             'response' => $result,
         ]);
 
+        // Log detailed response for debugging
+        \Log::info('Register Online Result', [
+            'cloud_id' => $cloudId,
+            'success' => $result['success'] ?? false,
+            'status_code' => $result['status_code'] ?? null,
+            'data' => $result['data'] ?? null,
+            'raw' => $result['raw'] ?? null,
+        ]);
+
+        // API mengembalikan success tapi data dikirim via webhook
+        if ($result['success']) {
+            CommandLog::create([
+                'command' => 'Register Online',
+                'parameters' => array_merge(['cloud_id' => $cloudId], $data),
+                'status' => 'executed',
+                'message' => 'Permintaan register berhasil dikirim. Data akan dikirim via webhook.',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => '✅ Permintaan register berhasil dikirim. Data akan dikirim via webhook ke sistem secara otomatis.',
+                'data' => $result,
+                'note' => 'Data user akan muncul di halaman Data Userinfo setelah diterima via webhook.',
+            ]);
+        }
+
         CommandLog::create([
             'command' => 'Register Online',
             'parameters' => array_merge(['cloud_id' => $cloudId], $data),
-            'status' => $result['success'] ? 'executed' : 'failed',
-            'message' => $result['success'] ? 'Berhasil register user online' : 'Gagal register user online',
+            'status' => 'failed',
+            'message' => 'Gagal mengirim permintaan register: ' . ($result['message'] ?? 'Unknown error'),
         ]);
 
         return response()->json([
-            'success' => $result['success'],
-            'message' => $result['success'] ? '✅ User berhasil diregister online' : '❌ Gagal register user online',
+            'success' => false,
+            'message' => '❌ Gagal mengirim permintaan register: ' . ($result['message'] ?? 'Unknown error'),
             'data' => $result
         ]);
     }
