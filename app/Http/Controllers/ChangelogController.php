@@ -13,6 +13,20 @@ class ChangelogController extends Controller
     {
         $changelogs = [
             [
+                'version' => '1.3.0',
+                'date' => '2024-08-14',
+                'changes' => [
+                    '📊 Perbaikan dan peningkatan fitur Dashboard',
+                    '📡 Penambahan status Online/Offline untuk setiap mesin absensi di dashboard',
+                    '🔍 Penambahan statistik metode verifikasi (sidik jari, wajah, kartu, dll)',
+                    '📷 Penambahan link foto absensi pada tabel data terbaru',
+                    '⚡ Implementasi caching untuk optimasi performa dashboard',
+                    '🔄 Penambahan realtime indicator dan auto-update stats setiap 30 detik',
+                    '🎨 Perbaikan tampilan tabel absensi dengan metode verifikasi',
+                    '📈 Optimasi chart data generation untuk 7 hari terakhir',
+                ]
+            ],
+            [
                 'version' => '1.2.0',
                 'date' => '2024-08-14',
                 'changes' => [
