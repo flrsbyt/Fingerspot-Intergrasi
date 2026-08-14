@@ -412,7 +412,10 @@
             <div class="col-md-10 main-content">
                 <!-- Topbar -->
                 <nav class="topbar">
-                    <div class="d-flex justify-content-end align-items-center">
+                    <div class="d-flex justify-content-end align-items-center gap-3">
+                        <div id="realtime-clock" style="font-weight: 600; color: #6B7280; font-size: 0.85rem;">
+                            <i class="fa-regular fa-clock me-1"></i> <span id="clock-time"></span>
+                        </div>
                         <div class="dropdown">
                             <div class="user-profile" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 <div class="user-avatar">
@@ -530,18 +533,16 @@ async function fetchJson(url, method = 'POST', data = {}) {
 function updateClock() {
     const now = new Date();
     const options = { 
-        weekday: 'long', 
+        day: '2-digit', 
+        month: 'short', 
         year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
+        hour: '2-digit', 
         minute: '2-digit',
-        second: '2-digit',
         hour12: false
     };
-    const clockElement = document.getElementById('realtime-clock');
+    const clockElement = document.getElementById('clock-time');
     if (clockElement) {
-        clockElement.textContent = now.toLocaleDateString('id-ID', options);
+        clockElement.textContent = now.toLocaleDateString('en-GB', options).replace(',', '');
     }
 }
 
