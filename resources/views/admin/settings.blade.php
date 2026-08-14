@@ -816,6 +816,8 @@ function registerOnline(btn) {
     const verification = document.getElementById('registerVerification').value;
     const device = document.getElementById('registerDevice').value;
     
+    console.log('Register Online Data:', { pin, verification, device });
+    
     if (!pin || !verification || !device) {
         showToast('⚠️ Semua field wajib diisi!', 'warning');
         return;
@@ -835,16 +837,20 @@ function registerOnline(btn) {
     })
     .then(response => response.json())
     .then(result => {
+        console.log('Register Online Response:', result);
         if (result.success) {
             showToast('✅ ' + result.message, 'success');
             document.getElementById('registerPin').value = '';
             document.getElementById('registerVerification').value = '';
         } else {
             showToast('❌ ' + result.message, 'error');
+            alert('Error: ' + result.message);
         }
     })
-    .catch(() => {
+    .catch(error => {
+        console.error('Register Online Error:', error);
         showToast('❌ Gagal terhubung ke server', 'error');
+        alert('Error: ' + error.message);
     })
     .finally(() => {
         btn.disabled = false;
