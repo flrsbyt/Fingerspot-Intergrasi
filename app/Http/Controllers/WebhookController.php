@@ -104,11 +104,12 @@ class WebhookController extends Controller
         // Extract data dari payload
         $pin = $attlogData['pin'] ?? $attlogData['user_id'] ?? null;
         $scanTime = $attlogData['scan'] ?? $attlogData['scan_time'] ?? $attlogData['timestamp'] ?? now();
-        $verify = $attlogData['verify'] ?? null;
-        $statusScan = $attlogData['status_scan'] ?? 0;
+        $verify = $attlogData['verify'] ?? $attlogData['verification'] ?? null;
+        $statusScan = $attlogData['status_scan'] ?? $attlogData['status'] ?? 0;
         $photoUrl = $attlogData['photo_url'] ?? null;
         
         // Convert status_scan ke human-readable status
+        // Jika status_scan tidak dikirim atau 0, gunakan default check-in
         $status = match($statusScan) {
             0 => 'check-in',
             1 => 'check-out', 
@@ -116,6 +117,15 @@ class WebhookController extends Controller
             3 => 'break-out',
             default => 'check-in'
         };
+
+        // Log untuk debugging
+        Log::info('Attlog Processing', [
+            'pin' => $pin,
+            'verify' => $verify,
+            'status_scan' => $statusScan,
+            'determined_status' => $status,
+            'scan_time' => $scanTime,
+        ]);
 
         if ($pin) {
             Attlog::create([
