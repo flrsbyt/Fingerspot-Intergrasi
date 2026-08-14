@@ -267,14 +267,11 @@
     }
 </style>
 
-<!-- Header dengan Total + Reload -->
+<!-- Header dengan Total -->
 <div class="d-flex justify-content-between align-items-center mb-4 page-header">
     <h1 class="h4 m-0">📋 Data Absensi</h1>
     <div class="header-right">
         <span class="total-badge">Total: {{ $attlogs->total() }}</span>
-        <button type="button" class="reload-badge" onclick="syncAttlog(this)">
-            <i class="fas fa-sync-alt"></i> Reload
-        </button>
     </div>
 </div>
 
@@ -283,18 +280,19 @@
     <div class="row g-3 align-items-end">
         <div class="col-md-12">
             <form method="GET" class="row g-2">
-                <div class="col-md-3">
-                    <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Mesin Absensi</label>
-                    <select name="device" class="form-control form-control-modern">
-                        <option value="">-- Semua Mesin --</option>
-                        @php
-                            $devices = App\Models\Pin::where('is_active', true)->get();
-                        @endphp
-                        @foreach($devices as $device)
-                            <option value="{{ $device->pin }}" {{ request('device') == $device->pin ? 'selected' : '' }}>
-                                {{ $device->device_name }} ({{ $device->pin }})
-                            </option>
-                        @endforeach
+                <div class="col-md-2">
+                    <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">PIN</label>
+                    <input type="text" name="pin" class="form-control form-control-modern" placeholder="Cari PIN..." value="{{ request('pin') }}">
+                </div>
+                <div class="col-md-2">
+                    <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Metode</label>
+                    <select name="verify" class="form-control form-control-modern">
+                        <option value="">-- Semua --</option>
+                        <option value="1" {{ request('verify') == '1' ? 'selected' : '' }}>👆 Sidik Jari</option>
+                        <option value="2" {{ request('verify') == '2' ? 'selected' : '' }}>🔑 Password</option>
+                        <option value="3" {{ request('verify') == '3' ? 'selected' : '' }}>💳 Kartu</option>
+                        <option value="4" {{ request('verify') == '4' ? 'selected' : '' }}>😊 Wajah</option>
+                        <option value="6" {{ request('verify') == '6' ? 'selected' : '' }}>🤚 Telapak Tangan</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -303,6 +301,8 @@
                         <option value="">-- Semua --</option>
                         <option value="check-in" {{ request('status') == 'check-in' ? 'selected' : '' }}>✅ Check-in</option>
                         <option value="check-out" {{ request('status') == 'check-out' ? 'selected' : '' }}>❌ Check-out</option>
+                        <option value="break-in" {{ request('status') == 'break-in' ? 'selected' : '' }}>☕ Break-in</option>
+                        <option value="break-out" {{ request('status') == 'break-out' ? 'selected' : '' }}>🔙 Break-out</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -313,14 +313,11 @@
                     <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Sampai Tanggal</label>
                     <input type="date" name="end_date" class="form-control form-control-modern" value="{{ request('end_date') }}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">&nbsp;</label>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn-modern btn-modern-primary" style="flex: 1;">
                             <i class="fas fa-filter"></i> Filter
-                        </button>
-                        <button type="button" class="btn-modern btn-modern-primary" onclick="syncAttlog(this)">
-                            <i class="fas fa-sync"></i> Sync
                         </button>
                         <a href="{{ route('attlogs.index') }}" class="btn-modern btn-modern-outline" style="min-width: 42px;" title="Reset Filter">
                             <i class="fas fa-undo"></i>
@@ -339,8 +336,9 @@
             <thead>
                 <tr>
                     <th style="width: 50px;">#</th>
-                    <th>Cloud ID</th>
-                    <th>Scan Time</th>
+                    <th>PIN</th>
+                    <th>Waktu Scan</th>
+                    <th>Metode</th>
                     <th>Status</th>
                     <th style="width: 80px;">Aksi</th>
                 </tr>
@@ -349,8 +347,30 @@
                 @forelse($attlogs as $log)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td><span class="mono-code">{{ $log->pin }}</span></td>
+                    <td>
+                        <span class="mono-code">{{ $log->pin }}</span>
+                        @if($log->photo_url)
+                        <a href="{{ $log->photo_url }}" target="_blank" class="ms-1" title="Lihat foto">
+                            <i class="fas fa-camera" style="color: #6366F1; font-size: 0.75rem;"></i>
+                        </a>
+                        @endif
+                    </td>
                     <td>{{ $log->scan_time->format('d M Y H:i:s') }}</td>
+                    <td>
+                        @php
+                            $verifyMethods = [
+                                1 => ['icon' => 'fa-fingerprint', 'label' => 'Sidik Jari', 'color' => '#6366F1'],
+                                2 => ['icon' => 'fa-key', 'label' => 'Password', 'color' => '#F59E0B'],
+                                3 => ['icon' => 'fa-id-card', 'label' => 'Kartu', 'color' => '#10B981'],
+                                4 => ['icon' => 'fa-face-smile', 'label' => 'Wajah', 'color' => '#EC4899'],
+                                6 => ['icon' => 'fa-hand', 'label' => 'Telapak Tangan', 'color' => '#8B5CF6'],
+                            ];
+                            $verify = $verifyMethods[$log->verify] ?? ['icon' => 'fa-question', 'label' => 'Unknown', 'color' => '#6B7280'];
+                        @endphp
+                        <span style="color: {{ $verify['color'] }}; font-size: 0.8rem; font-weight: 500;">
+                            <i class="fas {{ $verify['icon'] }}"></i> {{ $verify['label'] }}
+                        </span>
+                    </td>
                     <td>
                         <span class="{{ $log->status == 'check-in' ? 'badge-modern-success' : 'badge-modern-danger' }}">
                             {{ $log->status }}
@@ -364,7 +384,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">
+                    <td colspan="6" class="text-center text-muted py-4">
                         <i class="fa-regular fa-database me-2"></i> Belum ada data absensi
                     </td>
                 </tr>
@@ -423,67 +443,5 @@
 </div>
 @endif
 
-<!-- Form untuk Reload (hidden) -->
-<form action="{{ route('command.get-attlog') }}" method="POST" id="syncAttlogForm" style="display:none;">
-    @csrf
-    <input type="hidden" name="device" value="{{ request('device') }}">
-    <input type="hidden" name="start_date" value="{{ request('start_date') ?? date('Y-m-d') }}">
-    <input type="hidden" name="end_date" value="{{ request('end_date') ?? date('Y-m-d') }}">
-    <input type="hidden" name="pin" value="all">
-</form>
 
-<script>
-function syncAttlog(btn) {
-    const deviceSelect = document.querySelector('select[name="device"]');
-    const deviceId = deviceSelect ? deviceSelect.value : '';
-    
-    if (!deviceId) {
-        showToast('❌ Pilih mesin absensi terlebih dahulu', 'error');
-        return;
-    }
-    
-    const form = document.getElementById('syncAttlogForm');
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
-    data.device = deviceId;
-    
-    // Loading state
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
-    
-    fetch('{{ route("command.get-attlog") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            showToast('✅ ' + result.message, 'success');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showToast('❌ ' + result.message, 'error');
-        }
-    })
-    .catch(() => {
-        showToast('❌ Gagal terhubung ke server', 'error');
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-sync"></i> Sync';
-    });
-}
-
-function showToast(message, type) {
-    if (typeof window.showToast === 'function') {
-        window.showToast(message, type);
-    } else {
-        alert(message);
-    }
-}
-</script>
 @endsection

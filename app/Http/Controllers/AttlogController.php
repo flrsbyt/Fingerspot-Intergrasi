@@ -11,9 +11,14 @@ class AttlogController extends Controller
     {
         $query = Attlog::query();
 
-        // Filter by device
-        if ($request->filled('device')) {
-            $query->where('pin', $request->device);
+        // Filter by PIN
+        if ($request->filled('pin')) {
+            $query->where('pin', 'like', '%' . $request->pin . '%');
+        }
+
+        // Filter by verify method
+        if ($request->filled('verify')) {
+            $query->where('verify', $request->verify);
         }
 
         // Filter by status
