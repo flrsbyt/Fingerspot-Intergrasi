@@ -447,7 +447,7 @@
                 <div class="content-wrapper">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div></div>
-                        <div id="realtime-clock" style="font-weight: 600; color: #6B7280; font-size: 0.85rem;">
+                        <div id="realtime-clock" style="font-weight: 600; color: #6366F1; font-size: 0.85rem;">
                             <i class="fa-regular fa-clock me-1"></i> <span id="clock-time"></span>
                         </div>
                     </div>
