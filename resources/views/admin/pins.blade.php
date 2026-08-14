@@ -409,7 +409,7 @@
         <button type="button" class="reload-badge" onclick="getAllPin(this)">
             <i class="fas fa-sync-alt"></i> Reload
         </button>
-        <button type="button" class="btn-custom btn-custom-primary btn-custom-sm" data-bs-toggle="modal" data-bs-target="#tambahDeviceModal">
+        <button type="button" class="btn-modern btn-modern-primary btn-modern-sm" data-bs-toggle="modal" data-bs-target="#tambahDeviceModal">
             <i class="fas fa-plus"></i> Tambah
         </button>
     </div>
