@@ -446,9 +446,6 @@
             <h1>⚙️ Pengaturan</h1>
             <span class="subtitle">Kelola konfigurasi aplikasi dan integrasi perangkat</span>
         </div>
-        <span class="time-badge">
-            <i class="fa-regular fa-clock"></i> {{ now()->format('d M Y H:i') }}
-        </span>
     </div>
 
     <!-- ============================================================ -->
