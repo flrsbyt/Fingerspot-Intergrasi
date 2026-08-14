@@ -350,6 +350,11 @@ class CommandPanelController extends Controller
             'verification' => $request->input('verification'),
         ];
 
+        \Log::info('Register Online Request', [
+            'cloud_id' => $cloudId,
+            'data' => $data,
+        ]);
+
         if (empty($cloudId)) {
             return response()->json([
                 'success' => false,
@@ -364,58 +369,76 @@ class CommandPanelController extends Controller
             ]);
         }
 
-        $apiRequest = ApiRequest::create([
-            'command' => 'Register Online',
-            'payload' => array_merge(['cloud_id' => $cloudId], $data),
-            'status' => 'pending',
-            'request_id' => 'req_' . uniqid(),
-        ]);
+        try {
+            $apiRequest = ApiRequest::create([
+                'command' => 'Register Online',
+                'payload' => array_merge(['cloud_id' => $cloudId], $data),
+                'status' => 'pending',
+                'request_id' => 'req_' . uniqid(),
+            ]);
 
-        $result = $this->fingerspot->registerOnline($cloudId, $data);
+            $result = $this->fingerspot->registerOnline($cloudId, $data);
 
-        $apiRequest->update([
-            'status' => $result['success'] ? 'success' : 'failed',
-            'response' => $result,
-        ]);
+            \Log::info('Register Online API Result', [
+                'result' => $result,
+            ]);
 
-        // Log detailed response for debugging
-        \Log::info('Register Online Result', [
-            'cloud_id' => $cloudId,
-            'success' => $result['success'] ?? false,
-            'status_code' => $result['status_code'] ?? null,
-            'data' => $result['data'] ?? null,
-            'raw' => $result['raw'] ?? null,
-        ]);
+            $apiRequest->update([
+                'status' => $result['success'] ? 'success' : 'failed',
+                'response' => $result,
+            ]);
 
-        // API mengembalikan success tapi data dikirim via webhook
-        if ($result['success']) {
+            // Log detailed response for debugging
+            \Log::info('Register Online Result', [
+                'cloud_id' => $cloudId,
+                'success' => $result['success'] ?? false,
+                'status_code' => $result['status_code'] ?? null,
+                'data' => $result['data'] ?? null,
+                'raw' => $result['raw'] ?? null,
+                'message' => $result['message'] ?? null,
+            ]);
+
+            // API mengembalikan success tapi data dikirim via webhook
+            if ($result['success']) {
+                CommandLog::create([
+                    'command' => 'Register Online',
+                    'parameters' => array_merge(['cloud_id' => $cloudId], $data),
+                    'status' => 'executed',
+                    'message' => 'Permintaan register berhasil dikirim. Data akan dikirim via webhook.',
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => '✅ Permintaan register berhasil dikirim. Data akan dikirim via webhook ke sistem secara otomatis.',
+                    'data' => $result,
+                    'note' => 'Data user akan muncul di halaman Data Userinfo setelah diterima via webhook.',
+                ]);
+            }
+
             CommandLog::create([
                 'command' => 'Register Online',
                 'parameters' => array_merge(['cloud_id' => $cloudId], $data),
-                'status' => 'executed',
-                'message' => 'Permintaan register berhasil dikirim. Data akan dikirim via webhook.',
+                'status' => 'failed',
+                'message' => 'Gagal mengirim permintaan register: ' . ($result['message'] ?? 'Unknown error'),
             ]);
 
             return response()->json([
-                'success' => true,
-                'message' => '✅ Permintaan register berhasil dikirim. Data akan dikirim via webhook ke sistem secara otomatis.',
-                'data' => $result,
-                'note' => 'Data user akan muncul di halaman Data Userinfo setelah diterima via webhook.',
+                'success' => false,
+                'message' => '❌ Gagal mengirim permintaan register: ' . ($result['message'] ?? 'Unknown error'),
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Register Online Exception', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => '❌ Exception: ' . $e->getMessage(),
+                'data' => ['error' => $e->getMessage()]
             ]);
         }
-
-        CommandLog::create([
-            'command' => 'Register Online',
-            'parameters' => array_merge(['cloud_id' => $cloudId], $data),
-            'status' => 'failed',
-            'message' => 'Gagal mengirim permintaan register: ' . ($result['message'] ?? 'Unknown error'),
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => '❌ Gagal mengirim permintaan register: ' . ($result['message'] ?? 'Unknown error'),
-            'data' => $result
-        ]);
     }
 
     // 8. Restart Mesin
