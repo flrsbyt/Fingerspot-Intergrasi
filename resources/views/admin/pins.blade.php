@@ -406,9 +406,6 @@
         <span class="badge-mini {{ $deviceOnline ? 'badge-mini-success' : 'badge-mini-danger' }}">
             {{ $deviceOnline ? 'Online' : 'Offline' }}
         </span>
-        <button type="button" class="reload-badge" onclick="getAllPin(this)">
-            <i class="fas fa-sync-alt"></i> Reload
-        </button>
         <button type="button" class="btn-modern btn-modern-primary btn-modern-sm" data-bs-toggle="modal" data-bs-target="#tambahDeviceModal">
             <i class="fas fa-plus"></i> Tambah
         </button>
