@@ -309,8 +309,8 @@
         </div>
     </div>
     <div class="d-flex align-items-center gap-3">
-        <span class="mono-code" style="font-size:0.7rem;">
-            <i class="fa-regular fa-clock me-1"></i> {{ now()->format('d M Y H:i') }}
+        <span class="mono-code" style="font-size:0.7rem;" id="dashboard-clock">
+            <i class="fa-regular fa-clock me-1"></i> <span id="clock-time"></span>
         </span>
     </div>
 </div>
@@ -627,6 +627,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Realtime Dashboard Script -->
 <script>
+// Update clock every second
+function updateDashboardClock() {
+    const now = new Date();
+    const options = { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false
+    };
+    const clockElement = document.getElementById('clock-time');
+    if (clockElement) {
+        clockElement.textContent = now.toLocaleDateString('en-GB', options).replace(',', '');
+    }
+}
+
+setInterval(updateDashboardClock, 1000);
+updateDashboardClock(); // Initial call
+
 let dashboardInterval = null;
 let isRealtimeActive = false;
 
