@@ -25,6 +25,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('userinfos', UserinfoController::class);
     Route::resource('pins', PinController::class);
     Route::post('/pins/test-connection', [PinController::class, 'testConnection'])->name('pins.test-connection');
+    Route::post('/pins/debug-api', [PinController::class, 'debugApiRequest'])->name('pins.debug-api');
     Route::resource('api-requests', ApiRequestController::class);
     Route::resource('webhook-logs', WebhookLogController::class);
     Route::resource('command-logs', CommandLogController::class);

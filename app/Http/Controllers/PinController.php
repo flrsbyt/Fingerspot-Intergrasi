@@ -93,4 +93,38 @@ class PinController extends Controller
             'data' => $connectionStatus
         ]);
     }
+
+    /**
+     * Debug API request - untuk melihat detail error
+     */
+    public function debugApiRequest(Request $request)
+    {
+        $cloudId = $request->input('cloud_id');
+
+        if (empty($cloudId)) {
+            return response()->json([
+                'success' => false,
+                'message' => '❌ Cloud ID wajib diisi'
+            ]);
+        }
+
+        // Cek API request terakhir untuk command ini
+        $lastRequest = \App\Models\ApiRequest::where('command', 'Get All PIN')
+            ->where('payload->cloud_id', $cloudId)
+            ->latest()
+            ->first();
+
+        // Test langsung ke API
+        $result = $this->fingerspot->getAllPin($cloudId);
+
+        return response()->json([
+            'cloud_id' => $cloudId,
+            'api_config' => [
+                'url' => config('services.fingerspot.api_url'),
+                'api_key' => substr(config('services.fingerspot.api_key'), 0, 8) . '...' // Hidden sebagian
+            ],
+            'last_db_request' => $lastRequest,
+            'live_api_result' => $result,
+        ]);
+    }
 }

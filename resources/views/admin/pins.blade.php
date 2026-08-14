@@ -220,6 +220,43 @@
     }
     
     .device-status-online {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #059669;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .device-status-offline {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #DC2626;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .device-status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .device-info-text {
+        font-size: 0.7rem;
+        color: #6B7280;
+        margin-top: 4px;
+    }
+    
+    .device-status-online {
         background: #D1FAE5;
         color: #059669;
         padding: 4px 12px;
@@ -534,12 +571,15 @@
                             <span>{{ $isOnline ? 'Online' : 'Offline' }}</span>
                         </div>
                         <div class="device-info-text">
-                            Last checked: {{ $lastChecked }} | Status: {{ $statusCode }}
+                            Last: {{ $lastChecked }} | HTTP: {{ $statusCode }}
                         </div>
                     </td>
                     <td>
                         <button type="button" class="btn-modern btn-modern-sm btn-modern-outline" onclick="testConnection('{{ $pin->pin }}', this)" title="Test Koneksi">
                             <i class="fas fa-plug"></i>
+                        </button>
+                        <button type="button" class="btn-modern btn-modern-sm btn-modern-warning" onclick="debugApiRequest('{{ $pin->pin }}', this)" title="Debug API">
+                            <i class="fas fa-bug"></i>
                         </button>
                         <form action="{{ route('pins.destroy', $pin->id) }}" method="POST" style="display: inline;">
                             @csrf
@@ -894,6 +934,68 @@ function testConnection(cloudId, btn) {
     })
     .catch(() => {
         showToast('❌ Gagal terhubung ke server', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalIcon;
+    });
+}
+
+// 6. Debug API Request
+function debugApiRequest(cloudId, btn) {
+    btn.disabled = true;
+    const originalIcon = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    
+    fetch('{{ route("pins.debug-api") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ cloud_id: cloudId })
+    })
+    .then(response => response.json())
+    .then(result => {
+        console.log('Debug Result:', result);
+        
+        // Tampilkan hasil dalam format yang mudah dibaca
+        let message = '🔍 DEBUG RESULT:\n\n';
+        message += `Cloud ID: ${result.cloud_id}\n`;
+        message += `API URL: ${result.api_config.url}\n`;
+        message += `API Key: ${result.api_config.api_key}\n\n`;
+        
+        if (result.last_db_request) {
+            message += 'LAST DB REQUEST:\n';
+            message += `Command: ${result.last_db_request.command}\n`;
+            message += `Status: ${result.last_db_request.status}\n`;
+            message += `Created: ${result.last_db_request.created_at}\n\n`;
+        } else {
+            message += 'LAST DB REQUEST: No data found\n\n';
+        }
+        
+        message += 'LIVE API RESULT:\n';
+        message += `Success: ${result.live_api_result.success}\n`;
+        message += `Status Code: ${result.live_api_result.status_code}\n`;
+        if (result.live_api_result.data) {
+            message += `Data: ${JSON.stringify(result.live_api_result.data, null, 2)}\n`;
+        }
+        if (result.live_api_result.message) {
+            message += `Message: ${result.live_api_result.message}\n`;
+        }
+        
+        alert(message);
+        
+        if (result.live_api_result.success) {
+            showToast('✅ API Response berhasil diterima', 'success');
+        } else {
+            showToast('❌ Cek console untuk detail error', 'error');
+        }
+    })
+    .catch((error) => {
+        console.error('Debug Error:', error);
+        showToast('❌ Gagal debug: ' + error.message, 'error');
     })
     .finally(() => {
         btn.disabled = false;
