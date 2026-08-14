@@ -207,31 +207,19 @@ class FingerspotService
      */
 
     public function registerOnline($cloudId, $data)
-
     {
-
-        $requiredFields = ['pin', 'name'];
+        $requiredFields = ['pin', 'verification'];
 
         foreach ($requiredFields as $field) {
-
             if (!isset($data[$field])) {
-
                 return [
-
                     'success' => false,
-
                     'message' => "Field '$field' wajib diisi"
-
                 ];
-
             }
-
         }
 
-
-
         return $this->sendRequest($cloudId, 'register_online', $data);
-
     }
 
 
