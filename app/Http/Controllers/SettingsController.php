@@ -62,13 +62,19 @@ class SettingsController extends Controller
             'device_name' => 'required|string|max:255',
         ]);
 
-        \App\Models\Pin::create([
-            'pin' => $validated['pin'],
-            'device_name' => $validated['device_name'],
-            'is_active' => true,
-        ]);
+        try {
+            \App\Models\Pin::create([
+                'pin' => $validated['pin'],
+                'device_name' => $validated['device_name'],
+                'device_sn' => null, // Tambahkan field ini
+                'is_active' => true,
+                'raw_payload' => null, // Tambahkan field ini
+            ]);
 
-        return redirect()->back()->with('message', '✅ Perangkat berhasil ditambahkan!');
+            return redirect()->back()->with('message', '✅ Perangkat berhasil ditambahkan!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', '❌ Gagal menambahkan perangkat: ' . $e->getMessage());
+        }
     }
 
     private function updateEnv($data)
