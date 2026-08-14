@@ -16,7 +16,8 @@ class WebhookController extends Controller
     {
         try {
             $payload = $request->all();
-            $eventType = $request->input('event', 'unknown');
+            // Fingerspot uses 'type' parameter, not 'event'
+            $eventType = $request->input('type', $request->input('event', 'unknown'));
 
             Log::info('Webhook diterima', [
                 'event' => $eventType,
@@ -97,16 +98,32 @@ class WebhookController extends Controller
 
     private function processAttlog($payload)
     {
+        // Handle structure Fingerspot: { "type": "attlog", "data": { "pin": "...", "scan": "..." } }
+        $attlogData = $payload['data'] ?? $payload;
+        
         // Extract data dari payload
-        $pin = $payload['pin'] ?? $payload['user_id'] ?? null;
-        $scanTime = $payload['scan_time'] ?? $payload['timestamp'] ?? now();
-        $status = $payload['status'] ?? 'check-in';
+        $pin = $attlogData['pin'] ?? $attlogData['user_id'] ?? null;
+        $scanTime = $attlogData['scan'] ?? $attlogData['scan_time'] ?? $attlogData['timestamp'] ?? now();
+        $verify = $attlogData['verify'] ?? null;
+        $statusScan = $attlogData['status_scan'] ?? 0;
+        $photoUrl = $attlogData['photo_url'] ?? null;
+        
+        // Convert status_scan ke human-readable status
+        $status = match($statusScan) {
+            0 => 'check-in',
+            1 => 'check-out', 
+            2 => 'break-in',
+            3 => 'break-out',
+            default => 'check-in'
+        };
 
         if ($pin) {
             Attlog::create([
                 'pin' => $pin,
                 'scan_time' => $scanTime,
                 'status' => $status,
+                'verify' => $verify,
+                'photo_url' => $photoUrl,
                 'raw_payload' => $payload,
             ]);
         }
@@ -116,6 +133,8 @@ class WebhookController extends Controller
             'pin' => $pin,
             'scan_time' => $scanTime,
             'status' => $status,
+            'verify' => $verify,
+            'photo_url' => $photoUrl,
         ];
     }
 
