@@ -503,6 +503,94 @@
         </div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- DEVICE CONTROL PANEL                                          -->
+    <!-- ============================================================ -->
+    <div class="settings-card mb-4">
+        <div class="card-title">
+            <span class="title-left">
+                <i class="fas fa-cog"></i> Kontrol Mesin Absensi
+            </span>
+        </div>
+
+        <div class="row g-3 align-items-end">
+            {{-- Ambil Semua PIN --}}
+            <div class="col-md-3">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Sinkronisasi Data</label>
+                <button type="button" class="btn-custom btn-custom-primary w-100" onclick="getAllPin(this)">
+                    <i class="fas fa-key"></i> Ambil Semua PIN
+                </button>
+                <small class="text-muted" style="font-size: 0.7rem;">Download data user dari mesin</small>
+            </div>
+
+            {{-- Get Userinfo --}}
+            <div class="col-md-3">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Ambil Data User</label>
+                <button type="button" class="btn-custom btn-custom-success w-100" onclick="getUserinfo(this)">
+                    <i class="fas fa-users"></i> Get Userinfo
+                </button>
+                <small class="text-muted" style="font-size: 0.7rem;">Download data user lengkap</small>
+            </div>
+
+            {{-- Set Time --}}
+            <div class="col-md-3">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Atur Waktu</label>
+                <div class="d-flex gap-2">
+                    <input type="datetime-local" id="timezoneInput" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" value="{{ date('Y-m-d\TH:i') }}">
+                    <button type="button" class="btn-custom btn-custom-warning" onclick="setTime(this)" title="Set Waktu Mesin">
+                        <i class="fas fa-clock"></i>
+                    </button>
+                </div>
+                <small class="text-muted" style="font-size: 0.7rem;">Sinkronisasi waktu mesin</small>
+            </div>
+
+            {{-- Restart Mesin --}}
+            <div class="col-md-3">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Restart</label>
+                <button type="button" class="btn-custom btn-custom-danger w-100" onclick="restartMesin(this)">
+                    <i class="fas fa-power-off"></i> Restart Mesin
+                </button>
+                <small class="text-muted" style="font-size: 0.7rem;">⚠️ Mesin akan restart otomatis</small>
+            </div>
+        </div>
+
+        <hr class="my-3" style="border-color: #E6E8EC;">
+
+        <h6 style="font-size: 0.75rem; font-weight: 600; color: #6B7280; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">
+            <i class="fas fa-user-plus me-1"></i> Register User Online
+        </h6>
+
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">PIN *</label>
+                <input type="text" id="registerPin" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" placeholder="Contoh: 1010007" required>
+            </div>
+            <div class="col-md-4">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Nama Lengkap *</label>
+                <input type="text" id="registerName" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" placeholder="Nama karyawan" required>
+            </div>
+            <div class="col-md-3">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Mesin *</label>
+                <select id="registerDevice" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" required>
+                    <option value="">-- Pilih Mesin --</option>
+                    @php
+                        $devices = App\Models\Pin::where('is_active', true)->get();
+                    @endphp
+                    @foreach($devices as $device)
+                        <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">&nbsp;</label>
+                <button type="button" class="btn-custom btn-custom-success w-100" onclick="registerOnline(this)">
+                    <i class="fas fa-user-plus"></i> Register
+                </button>
+            </div>
+        </div>
+        <small class="text-muted" style="font-size: 0.7rem;">Registrasi user langsung ke mesin absensi</small>
+    </div>
+
 </div>
 
 <!-- ============================================================ -->
@@ -542,6 +630,214 @@
 <!-- SCRIPT AJAX                                                   -->
 <!-- ============================================================ -->
 <script>
+// ============================================
+// DEVICE CONTROL FUNCTIONS
+// ============================================
+
+// 1. Get All PIN
+function getAllPin(btn) {
+    const deviceId = prompt('Masukkan Cloud ID mesin:');
+    
+    if (!deviceId) {
+        showToast('❌ Cloud ID mesin wajib diisi', 'error');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+    
+    fetch('{{ route("command.get-all-pin") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ device: deviceId })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ ' + result.message, 'success');
+        } else {
+            showToast('❌ ' + result.message, 'error');
+        }
+    })
+    .catch(() => {
+        showToast('❌ Gagal terhubung ke server', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-key"></i> Ambil Semua PIN';
+    });
+}
+
+// 2. Get Userinfo
+function getUserinfo(btn) {
+    const deviceId = prompt('Masukkan Cloud ID mesin:');
+    
+    if (!deviceId) {
+        showToast('❌ Cloud ID mesin wajib diisi', 'error');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+    
+    fetch('{{ route("command.get-userinfo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ device: deviceId, pin: 'all' })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ ' + result.message, 'success');
+        } else {
+            showToast('❌ ' + result.message, 'error');
+        }
+    })
+    .catch(() => {
+        showToast('❌ Gagal terhubung ke server', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-users"></i> Get Userinfo';
+    });
+}
+
+// 3. Set Time
+function setTime(btn) {
+    const deviceId = prompt('Masukkan Cloud ID mesin:');
+    
+    if (!deviceId) {
+        showToast('❌ Cloud ID mesin wajib diisi', 'error');
+        return;
+    }
+    
+    const input = document.getElementById('timezoneInput');
+    const timezone = input.value;
+    
+    if (!timezone) {
+        showToast('⚠️ Pilih waktu terlebih dahulu!', 'warning');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    
+    fetch('{{ route("command.set-time") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ device: deviceId, timezone: timezone })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ ' + result.message, 'success');
+        } else {
+            showToast('❌ ' + result.message, 'error');
+        }
+    })
+    .catch(() => {
+        showToast('❌ Gagal terhubung ke server', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-clock"></i>';
+    });
+}
+
+// 4. Restart Mesin
+function restartMesin(btn) {
+    const deviceId = prompt('Masukkan Cloud ID mesin:');
+    
+    if (!deviceId) {
+        showToast('❌ Cloud ID mesin wajib diisi', 'error');
+        return;
+    }
+    
+    if (!confirm('⚠️ Yakin mau restart mesin?')) return;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+    
+    fetch('{{ route("command.restart-mesin") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ device: deviceId })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ ' + result.message, 'success');
+        } else {
+            showToast('❌ ' + result.message, 'error');
+        }
+    })
+    .catch(() => {
+        showToast('❌ Gagal terhubung ke server', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-power-off"></i> Restart Mesin';
+    });
+}
+
+// 5. Register Online
+function registerOnline(btn) {
+    const pin = document.getElementById('registerPin').value;
+    const name = document.getElementById('registerName').value;
+    const device = document.getElementById('registerDevice').value;
+    
+    if (!pin || !name || !device) {
+        showToast('⚠️ Semua field wajib diisi!', 'warning');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+    
+    fetch('{{ route("command.register-online") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ device: device, pin: pin, name: name })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ ' + result.message, 'success');
+            document.getElementById('registerPin').value = '';
+            document.getElementById('registerName').value = '';
+        } else {
+            showToast('❌ ' + result.message, 'error');
+        }
+    })
+    .catch(() => {
+        showToast('❌ Gagal terhubung ke server', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-user-plus"></i> Register';
+    });
+}
+
 // ============================================
 // TOAST NOTIFICATION
 // ============================================
