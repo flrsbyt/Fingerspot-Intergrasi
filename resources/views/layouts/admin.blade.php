@@ -412,7 +412,8 @@
             <div class="col-md-10 main-content">
                 <!-- Topbar -->
                 <nav class="topbar">
-                    <div class="d-flex justify-content-end align-items-center">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <div id="realtime-clock" style="font-weight: 600; color: #6B7280; font-size: 0.9rem;"></div>
                         <div class="dropdown">
                             <div class="user-profile" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 <div class="user-avatar">
@@ -525,6 +526,29 @@ async function fetchJson(url, method = 'POST', data = {}) {
     });
     return response.json();
 }
+
+// Realtime Clock
+function updateClock() {
+    const now = new Date();
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    };
+    const clockElement = document.getElementById('realtime-clock');
+    if (clockElement) {
+        clockElement.textContent = now.toLocaleDateString('id-ID', options);
+    }
+}
+
+// Update clock every second
+setInterval(updateClock, 1000);
+updateClock(); // Initial call
 </script>
 </body>
 </html>

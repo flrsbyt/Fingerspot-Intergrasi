@@ -403,11 +403,14 @@
     <h1 class="h4 m-0">🔑 Manajemen Perangkat</h1>
     <div class="header-right">
         <span class="total-badge">Total: {{ $pins->total() }}</span>
-        <span class="badge-mini {{ $anyDeviceOnline ? 'badge-mini-success' : 'badge-mini-danger' }}">
-            {{ $anyDeviceOnline ? 'Ada Online' : 'Semua Offline' }}
+        <span class="badge-mini {{ $deviceOnline ? 'badge-mini-success' : 'badge-mini-danger' }}">
+            {{ $deviceOnline ? 'Online' : 'Offline' }}
         </span>
         <button type="button" class="reload-badge" onclick="getAllPin(this)">
             <i class="fas fa-sync-alt"></i> Reload
+        </button>
+        <button type="button" class="btn-custom btn-custom-primary btn-custom-sm" data-bs-toggle="modal" data-bs-target="#tambahDeviceModal">
+            <i class="fas fa-plus"></i> Tambah
         </button>
     </div>
 </div>
@@ -419,7 +422,7 @@
             <form method="GET" class="row g-2 mb-3">
                 <div class="col-md-3">
                     <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Mesin Absensi</label>
-                    <select name="device" class="form-control form-control-modern" onchange="this.form.submit()">
+                    <select name="device" class="form-control form-control-modern">
                         <option value="">-- Semua Mesin --</option>
                         @php
                             $devices = App\Models\Pin::where('is_active', true)->get();
@@ -461,7 +464,7 @@
                     <button type="button" class="btn-modern btn-modern-primary w-100" onclick="getAllPin(this)">
                         <i class="fas fa-key"></i> Ambil Semua PIN
                     </button>
-                    <small class="text-muted" style="font-size: 0.7rem;">⚠️ Data user dikirim via webhook</small>
+                    <small class="text-muted" style="font-size: 0.7rem;">Download data user dari mesin</small>
                 </div>
 
                 {{-- Get Userinfo --}}
@@ -548,8 +551,8 @@
                     <th>Cloud ID</th>
                     <th>Device Name</th>
                     <th>Device SN</th>
-                    <th style="width: 120px;">Status Koneksi</th>
-                    <th style="width: 100px;">Aksi</th>
+                    <th style="width: 100px;">Status</th>
+                    <th style="width: 80px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -560,27 +563,11 @@
                     <td>{{ $pin->device_name ?? '-' }}</td>
                     <td>{{ $pin->device_sn ?? '-' }}</td>
                     <td>
-                        @php
-                            $deviceStatus = $deviceStatuses[$pin->pin] ?? null;
-                            $isOnline = $deviceStatus['online'] ?? false;
-                            $lastChecked = $deviceStatus['last_checked'] ?? 'N/A';
-                            $statusCode = $deviceStatus['status_code'] ?? 'N/A';
-                        @endphp
-                        <div class="{{ $isOnline ? 'device-status-online' : 'device-status-offline' }}">
-                            <span class="device-status-dot"></span>
-                            <span>{{ $isOnline ? 'Online' : 'Offline' }}</span>
-                        </div>
-                        <div class="device-info-text">
-                            Last: {{ $lastChecked }} | HTTP: {{ $statusCode }}
-                        </div>
+                        <span class="{{ $pin->is_active ? 'badge-modern-success' : 'badge-modern-danger' }}">
+                            {{ $pin->is_active ? 'Online' : 'Offline' }}
+                        </span>
                     </td>
                     <td>
-                        <button type="button" class="btn-modern btn-modern-sm btn-modern-outline" onclick="testConnection('{{ $pin->pin }}', this)" title="Test Koneksi">
-                            <i class="fas fa-plug"></i>
-                        </button>
-                        <button type="button" class="btn-modern btn-modern-sm btn-modern-warning" onclick="debugApiRequest('{{ $pin->pin }}', this)" title="Debug API">
-                            <i class="fas fa-bug"></i>
-                        </button>
                         <form action="{{ route('pins.destroy', $pin->id) }}" method="POST" style="display: inline;">
                             @csrf
                             @method('DELETE')
@@ -651,53 +638,40 @@
 </div>
 @endif
 
+<!-- Modal Tambah Device -->
+<div class="modal fade modal-modern" id="tambahDeviceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('settings.add-device') }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">➕ Tambah Mesin Absensi Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label form-label-modern">Cloud ID *</label>
+                        <input type="text" name="pin" class="form-control form-control-modern" placeholder="Contoh: ABC123XYZ" required>
+                        <small class="text-muted" style="font-size: 0.75rem;">ID Cloud dari Fingerspot</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label form-label-modern">Nama Perangkat *</label>
+                        <input type="text" name="device_name" class="form-control form-control-modern" placeholder="Contoh: Mesin Kantor Pusat" required>
+                        <small class="text-muted" style="font-size: 0.75rem;">Nama untuk identifikasi</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modern btn-modern-outline" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-modern btn-modern-success">
+                        <i class="fas fa-plus"></i> Tambah Perangkat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
-// Auto-refresh device status every 30 seconds
-let refreshInterval;
-let isPageVisible = true;
-
-document.addEventListener('visibilitychange', () => {
-    isPageVisible = !document.hidden;
-    if (isPageVisible) {
-        refreshDeviceStatus();
-    }
-});
-
-function refreshDeviceStatus() {
-    fetch(window.location.href)
-        .then(response => response.text())
-        .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const newStatusCells = doc.querySelectorAll('td:nth-child(5)');
-            const currentStatusCells = document.querySelectorAll('td:nth-child(5)');
-            
-            currentStatusCells.forEach((cell, index) => {
-                if (newStatusCells[index]) {
-                    cell.innerHTML = newStatusCells[index].innerHTML;
-                }
-            });
-            
-            // Update overall status badge
-            const newBadge = doc.querySelector('.badge-mini');
-            const currentBadge = document.querySelector('.badge-mini');
-            if (newBadge && currentBadge) {
-                currentBadge.className = newBadge.className;
-                currentBadge.textContent = newBadge.textContent;
-            }
-        })
-        .catch(() => {
-            console.log('Failed to refresh device status');
-        });
-}
-
-// Start auto-refresh
-refreshInterval = setInterval(() => {
-    if (isPageVisible) {
-        refreshDeviceStatus();
-    }
-}, 30000);
-
 // 1. Get All PIN (Reload)
 function getAllPin(btn) {
     const deviceSelect = document.querySelector('select[name="device"]');

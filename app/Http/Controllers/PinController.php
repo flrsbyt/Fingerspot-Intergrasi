@@ -36,33 +36,16 @@ class PinController extends Controller
 
         $pins = $query->paginate(20)->withQueryString();
 
-        // Check connection status for each device with caching
-        $deviceStatuses = [];
-        foreach ($pins as $pin) {
-            // Cache device status for 30 seconds to reduce API calls
-            $cacheKey = 'device_status_' . $pin->pin;
-            $connectionStatus = \Illuminate\Support\Facades\Cache::remember($cacheKey, 30, function() use ($pin) {
-                return $this->fingerspot->checkConnection($pin->pin);
-            });
-            
-            $deviceStatuses[$pin->pin] = [
-                'online' => $connectionStatus['online'] ?? false,
-                'status_code' => $connectionStatus['status_code'] ?? null,
-                'data' => $connectionStatus['data'] ?? null,
-                'last_checked' => now()->format('H:i:s'),
-            ];
+        // Check connection status for first device
+        $firstDevice = $pins->first();
+        $deviceOnline = false;
+        
+        if ($firstDevice) {
+            $connectionStatus = $this->fingerspot->checkConnection($firstDevice->pin);
+            $deviceOnline = $connectionStatus['online'] ?? false;
         }
 
-        // Overall status based on any active device being online
-        $anyDeviceOnline = false;
-        foreach ($deviceStatuses as $status) {
-            if ($status['online']) {
-                $anyDeviceOnline = true;
-                break;
-            }
-        }
-
-        return view('admin.pins', compact('pins', 'deviceStatuses', 'anyDeviceOnline'));
+        return view('admin.pins', compact('pins', 'deviceOnline'));
     }
 
     public function destroy($id)
