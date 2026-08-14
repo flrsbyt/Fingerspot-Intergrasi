@@ -566,22 +566,8 @@
                 <input type="text" id="registerPin" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" placeholder="Contoh: 1" required>
             </div>
             <div class="col-md-3">
-                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Tipe Biometrik *</label>
-                <select id="registerVerification" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" required>
-                    <option value="">-- Pilih --</option>
-                    <option value="0">0</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="12">12 (Wajah)</option>
-                    <option value="13">13 (Vein)</option>
-                </select>
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Jari (1-10) *</label>
+                <input type="text" id="registerVerification" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" placeholder="1-10" required>
             </div>
             <div class="col-md-4">
                 <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Mesin *</label>
