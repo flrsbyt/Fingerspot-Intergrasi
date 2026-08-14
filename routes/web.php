@@ -12,6 +12,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\RealtimeController;
 
 // ========== ADMIN ROUTES (Harus Login) ==========
 Route::middleware(['auth'])->group(function () {
@@ -52,6 +53,13 @@ Route::middleware(['auth'])->group(function () {
 
 // ========== WEBHOOK ROUTE (Public) ==========
 Route::post('/api/webhook/fingerspot', [WebhookController::class, 'handle'])->name('webhook.fingerspot');
+
+// ========== REALTIME API ROUTES (Auth) ==========
+Route::middleware(['auth'])->group(function () {
+    Route::get('/api/realtime/attlogs', [RealtimeController::class, 'latestAttlogs'])->name('realtime.attlogs');
+    Route::get('/api/realtime/device-status', [RealtimeController::class, 'deviceStatus'])->name('realtime.device-status');
+    Route::get('/api/realtime/system-stats', [RealtimeController::class, 'systemStats'])->name('realtime.system-stats');
+});
 
 // ========== HOME ==========
 Route::get('/', function () {

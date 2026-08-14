@@ -178,6 +178,77 @@
         font-weight: 600;
     }
     
+    .device-status-online {
+        background: #D1FAE5;
+        color: #059669;
+        padding: 4px 12px;
+        border-radius: 100px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .device-status-offline {
+        background: #FEE2E2;
+        color: #DC2626;
+        padding: 4px 12px;
+        border-radius: 100px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .device-status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .device-status-online .device-status-dot {
+        background: #059669;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+        animation: pulse-green 2s infinite;
+    }
+    
+    .device-status-offline .device-status-dot {
+        background: #DC2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+    }
+    
+    @keyframes pulse-green {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .realtime-indicator {
+        font-size: 0.75rem;
+        color: #6B7280;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .realtime-indicator.active {
+        color: #059669;
+    }
+    
+    .realtime-indicator .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #6B7280;
+    }
+    
+    .realtime-indicator.active .dot {
+        background: #059669;
+        animation: pulse-green 2s infinite;
+    }
+    
     /* PAGINATION CUSTOM */
     .pagination-wrapper-custom {
         display: flex;
@@ -267,10 +338,19 @@
     }
 </style>
 
-<!-- Header dengan Total -->
+<!-- Header dengan Total + Device Status -->
 <div class="d-flex justify-content-between align-items-center mb-4 page-header">
-    <h1 class="h4 m-0">📋 Data Absensi</h1>
+    <div>
+        <h1 class="h4 m-0">📋 Data Absensi</h1>
+        <div class="realtime-indicator mt-1" id="realtimeIndicator">
+            <span class="dot"></span>
+            <span id="realtimeStatus">Checking connection...</span>
+        </div>
+    </div>
     <div class="header-right">
+        <div id="deviceStatusContainer" class="d-flex gap-2 mb-2">
+            <!-- Device status will be loaded here -->
+        </div>
         <span class="total-badge">Total: {{ $attlogs->total() }}</span>
     </div>
 </div>
@@ -443,5 +523,302 @@
 </div>
 @endif
 
+<!-- Realtime Script -->
+<script>
+let pollingInterval = null;
+let deviceStatusInterval = null;
+let lastAttlogId = {{ $attlogs->max('id') ?? 0 }};
+let isRealtimeActive = false;
+
+// Start realtime monitoring
+function startRealtimeMonitoring() {
+    if (isRealtimeActive) return;
+    
+    isRealtimeActive = true;
+    updateRealtimeIndicator(true);
+    
+    // Poll for new attlogs every 10 seconds (reduced from 5s for better performance)
+    pollingInterval = setInterval(() => {
+        fetchNewAttlogs();
+    }, 10000);
+    
+    // Check device status every 30 seconds (cached for 30s, so this is optimal)
+    deviceStatusInterval = setInterval(() => {
+        checkDeviceStatus();
+    }, 30000);
+    
+    // Initial check
+    checkDeviceStatus();
+}
+
+// Stop realtime monitoring
+function stopRealtimeMonitoring() {
+    isRealtimeActive = false;
+    updateRealtimeIndicator(false);
+    
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    }
+    
+    if (deviceStatusInterval) {
+        clearInterval(deviceStatusInterval);
+        deviceStatusInterval = null;
+    }
+}
+
+// Update realtime indicator
+function updateRealtimeIndicator(active) {
+    const indicator = document.getElementById('realtimeIndicator');
+    const status = document.getElementById('realtimeStatus');
+    
+    if (active) {
+        indicator.classList.add('active');
+        status.textContent = 'Realtime Active';
+    } else {
+        indicator.classList.remove('active');
+        status.textContent = 'Realtime Paused';
+    }
+}
+
+// Fetch new attlogs
+function fetchNewAttlogs() {
+    const url = new URL('{{ route("realtime.attlogs") }}', window.location.origin);
+    url.searchParams.append('last_id', lastAttlogId);
+    url.searchParams.append('limit', 10);
+    
+    // Add current filters
+    const pinInput = document.querySelector('input[name="pin"]');
+    if (pinInput && pinInput.value) {
+        url.searchParams.append('pin', pinInput.value);
+    }
+    
+    const verifySelect = document.querySelector('select[name="verify"]');
+    if (verifySelect && verifySelect.value) {
+        url.searchParams.append('verify', verifySelect.value);
+    }
+    
+    const statusSelect = document.querySelector('select[name="status"]');
+    if (statusSelect && statusSelect.value) {
+        url.searchParams.append('status', statusSelect.value);
+    }
+    
+    const startDateInput = document.querySelector('input[name="start_date"]');
+    if (startDateInput && startDateInput.value) {
+        url.searchParams.append('start_date', startDateInput.value);
+    }
+    
+    const endDateInput = document.querySelector('input[name="end_date"]');
+    if (endDateInput && endDateInput.value) {
+        url.searchParams.append('end_date', endDateInput.value);
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.data.length > 0) {
+                // Update last ID
+                lastAttlogId = result.last_id;
+                
+                // Add new rows to table
+                const tbody = document.querySelector('tbody');
+                const emptyRow = tbody.querySelector('tr td[colspan]');
+                
+                if (emptyRow) {
+                    // Remove empty row if exists
+                    emptyRow.closest('tr').remove();
+                }
+                
+                // Add new rows at the top
+                result.data.forEach(attlog => {
+                    const newRow = createAttlogRow(attlog, tbody.children.length + 1);
+                    tbody.insertBefore(newRow, tbody.firstChild);
+                });
+                
+                // Update row numbers
+                updateRowNumbers();
+                
+                // Update total count
+                const totalBadge = document.querySelector('.total-badge');
+                if (totalBadge) {
+                    const currentTotal = parseInt(totalBadge.textContent.replace('Total: ', ''));
+                    totalBadge.textContent = 'Total: ' + (currentTotal + result.data.length);
+                }
+                
+                // Show notification
+                showNewDataNotification(result.data.length);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching new attlogs:', error);
+        });
+}
+
+// Create attlog row HTML
+function createAttlogRow(attlog, index) {
+    const tr = document.createElement('tr');
+    
+    const verifyMethods = {
+        1: {icon: 'fa-fingerprint', label: 'Sidik Jari', color: '#6366F1'},
+        2: {icon: 'fa-key', label: 'Password', color: '#F59E0B'},
+        3: {icon: 'fa-id-card', label: 'Kartu', color: '#10B981'},
+        4: {icon: 'fa-face-smile', label: 'Wajah', color: '#EC4899'},
+        6: {icon: 'fa-hand', label: 'Telapak Tangan', color: '#8B5CF6'},
+    };
+    const verify = verifyMethods[attlog.verify] || {icon: 'fa-question', label: 'Unknown', color: '#6B7280'};
+    
+    const statusClass = attlog.status === 'check-in' ? 'badge-modern-success' : 'badge-modern-danger';
+    const scanTime = new Date(attlog.scan_time).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    
+    const photoLink = attlog.photo_url ? 
+        `<a href="${attlog.photo_url}" target="_blank" class="ms-1" title="Lihat foto">
+            <i class="fas fa-camera" style="color: #6366F1; font-size: 0.75rem;"></i>
+        </a>` : '';
+    
+    tr.innerHTML = `
+        <td>${index}</td>
+        <td>
+            <span class="mono-code">${attlog.pin}</span>
+            ${photoLink}
+        </td>
+        <td>${scanTime}</td>
+        <td>
+            <span style="color: ${verify.color}; font-size: 0.8rem; font-weight: 500;">
+                <i class="fas ${verify.icon}"></i> ${verify.label}
+            </span>
+        </td>
+        <td>
+            <span class="${statusClass}">
+                ${attlog.status}
+            </span>
+        </td>
+        <td>
+            <a href="/attlogs/${attlog.id}" class="btn-modern btn-modern-info">
+                <i class="fas fa-eye"></i>
+            </a>
+        </td>
+    `;
+    
+    // Add animation class
+    tr.style.animation = 'fadeIn 0.5s ease-in';
+    
+    return tr;
+}
+
+// Update row numbers
+function updateRowNumbers() {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach((row, index) => {
+        const firstCell = row.querySelector('td:first-child');
+        if (firstCell) {
+            firstCell.textContent = index + 1;
+        }
+    });
+}
+
+// Check device status
+function checkDeviceStatus() {
+    fetch('{{ route("realtime.device-status") }}')
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                updateDeviceStatusUI(result.devices);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking device status:', error);
+        });
+}
+
+// Update device status UI
+function updateDeviceStatusUI(devices) {
+    const container = document.getElementById('deviceStatusContainer');
+    if (!container) return;
+    
+    container.innerHTML = devices.map(device => {
+        const statusClass = device.online ? 'device-status-online' : 'device-status-offline';
+        const statusText = device.online ? '🟢 Online' : '🔴 Offline';
+        
+        return `
+            <div class="${statusClass}" title="${device.device_name} (${device.pin})">
+                <span class="device-status-dot"></span>
+                <span style="font-size: 0.7rem;">${device.pin}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// Show new data notification
+function showNewDataNotification(count) {
+    // Create a simple toast notification
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #059669;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        animation: slideIn 0.3s ease-out;
+        font-size: 0.9rem;
+        font-weight: 500;
+    `;
+    toast.innerHTML = `✅ ${count} data absensi baru masuk`;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// Start monitoring when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    startRealtimeMonitoring();
+});
+
+// Stop monitoring when page is hidden
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        stopRealtimeMonitoring();
+    } else {
+        startRealtimeMonitoring();
+    }
+});
+
+// Clean up on page unload
+window.addEventListener('beforeunload', function() {
+    stopRealtimeMonitoring();
+});
+</script>
 
 @endsection
