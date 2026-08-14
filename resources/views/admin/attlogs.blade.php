@@ -27,30 +27,6 @@
         font-weight: 500;
     }
     
-    .reload-badge {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.8rem;
-        background: #FFFFFF;
-        color: #6366F1;
-        padding: 6px 14px;
-        border-radius: 100px;
-        font-weight: 500;
-        border: 1px solid #E6E8EC;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .reload-badge:hover {
-        background: #F3F4FF;
-        border-color: #6366F1;
-    }
-    .reload-badge i {
-        font-size: 0.75rem;
-    }
-    
     .command-panel {
         background: #FFFFFF;
         border: 1px solid #E6E8EC;

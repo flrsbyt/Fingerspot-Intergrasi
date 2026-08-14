@@ -27,30 +27,6 @@
         font-weight: 500;
     }
     
-    .reload-badge {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.8rem;
-        background: #FFFFFF;
-        color: #6366F1;
-        padding: 6px 14px;
-        border-radius: 100px;
-        font-weight: 500;
-        border: 1px solid #E6E8EC;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .reload-badge:hover {
-        background: #F3F4FF;
-        border-color: #6366F1;
-    }
-    .reload-badge i {
-        font-size: 0.75rem;
-    }
-    
     .command-panel {
         background: #FFFFFF;
         border: 1px solid #E6E8EC;
@@ -319,14 +295,11 @@
     }
 </style>
 
-<!-- Header dengan Total + Reload -->
+<!-- Header dengan Total -->
 <div class="d-flex justify-content-between align-items-center mb-4 page-header">
     <h1 class="h4 m-0">👤 Manajemen Karyawan</h1>
     <div class="header-right">
         <span class="total-badge">Total: {{ $userinfos->total() }}</span>
-        <button type="button" class="reload-badge" onclick="syncUserinfo(this)">
-            <i class="fas fa-sync-alt"></i> Reload
-        </button>
     </div>
 </div>
 
@@ -473,46 +446,7 @@
 </div>
 @endif
 
-<!-- Form untuk Sync (hidden) -->
-<form action="{{ route('command.get-userinfo') }}" method="POST" id="syncUserinfoForm" style="display:none;">
-    @csrf
-</form>
-
 <script>
-function syncUserinfo(btn) {
-    const form = document.getElementById('syncUserinfoForm');
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
-    
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
-    
-    fetch('{{ route("command.get-userinfo") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            showToast('✅ ' + result.message, 'success');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showToast('❌ ' + result.message, 'error');
-        }
-    })
-    .catch(() => {
-        showToast('❌ Gagal terhubung ke server', 'error');
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Reload';
-    });
-}
 
 function hapusUser(btn, pin) {
     if (!confirm(`Yakin hapus user dengan PIN ${pin} dari mesin?`)) return;
