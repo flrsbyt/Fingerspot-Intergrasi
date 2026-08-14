@@ -205,7 +205,7 @@ class FingerspotService
 
     public function registerOnline($cloudId, $data)
     {
-        $requiredFields = ['pin', 'verification'];
+        $requiredFields = ['pin'];
 
         foreach ($requiredFields as $field) {
             if (!isset($data[$field])) {
