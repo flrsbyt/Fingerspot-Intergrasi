@@ -374,57 +374,6 @@
                         <i class="fas fa-undo"></i>
                     </a>
                 </div>
-                <div class="col-md-2">
-                    <button type="button" class="btn-modern btn-modern-success w-100" data-bs-toggle="modal" data-bs-target="#tambahKaryawanModal">
-                        <i class="fas fa-user-plus"></i> Tambah
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Tambah Karyawan -->
-<div class="modal fade modal-modern" id="tambahKaryawanModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="{{ route('command.set-userinfo') }}" method="POST">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">➕ Tambah Karyawan ke Mesin</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label form-label-modern">Mesin Absensi *</label>
-                        <select name="device" class="form-control form-control-modern" required>
-                            <option value="">-- Pilih Mesin --</option>
-                            @php
-                                $devices = App\Models\Pin::where('is_active', true)->get();
-                            @endphp
-                            @foreach($devices as $device)
-                                <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted" style="font-size: 0.75rem;">Pilih mesin absensi tempat karyawan akan ditambahkan</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label form-label-modern">PIN Karyawan *</label>
-                        <input type="text" name="pin" class="form-control form-control-modern" placeholder="Contoh: 1010007" required>
-                        <small class="text-muted" style="font-size: 0.75rem;">ID unik untuk karyawan (biasanya dari sistem HR)</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label form-label-modern">Nama Lengkap *</label>
-                        <input type="text" name="name" class="form-control form-control-modern" placeholder="Nama lengkap karyawan" required>
-                        <small class="text-muted" style="font-size: 0.75rem;">Nama yang akan tampil di mesin absensi</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-modern btn-modern-outline" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn-modern btn-modern-success">
-                        <i class="fas fa-upload"></i> Kirim ke Mesin
-                    </button>
-                </div>
             </form>
         </div>
     </div>
