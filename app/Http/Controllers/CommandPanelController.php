@@ -234,20 +234,38 @@ class CommandPanelController extends Controller
             'response' => $result,
         ]);
 
+        // Log detailed response for debugging
+        \Log::info('Get All PIN Result', [
+            'cloud_id' => $cloudId,
+            'success' => $result['success'] ?? false,
+            'status_code' => $result['status_code'] ?? null,
+            'data' => $result['data'] ?? null,
+            'raw' => $result['raw'] ?? null,
+        ]);
+
         // Proses dan simpan data PIN ke database lokal
         $savedCount = 0;
         $updatedCount = 0;
         $pinCount = 0;
         
         if ($result['success']) {
-            // Cek format response API
+            // Cek format response API - handle multiple possible formats
+            $pinData = null;
+            
             if (isset($result['data']['data']) && is_array($result['data']['data'])) {
                 $pinData = $result['data']['data'];
+            } elseif (isset($result['data']) && is_array($result['data'])) {
+                $pinData = $result['data'];
+            } elseif (isset($result['data']['Data']) && is_array($result['data']['Data'])) {
+                $pinData = $result['data']['Data'];
+            }
+            
+            if ($pinData) {
                 $pinCount = count($pinData);
                 
                 foreach ($pinData as $pin) {
                     // Extract PIN dari data
-                    $pinValue = is_array($pin) ? ($pin['pin'] ?? $pin['PIN'] ?? null) : $pin;
+                    $pinValue = is_array($pin) ? ($pin['pin'] ?? $pin['PIN'] ?? $pin['Pin'] ?? null) : $pin;
                     
                     if ($pinValue) {
                         // Cek apakah sudah ada
@@ -258,7 +276,7 @@ class CommandPanelController extends Controller
                         } else {
                             \App\Models\Userinfo::create([
                                 'pin' => $pinValue,
-                                'name' => is_array($pin) ? ($pin['name'] ?? $pin['NAME'] ?? 'User ' . $pinValue) : 'User ' . $pinValue,
+                                'name' => is_array($pin) ? ($pin['name'] ?? $pin['NAME'] ?? $pin['Name'] ?? 'User ' . $pinValue) : 'User ' . $pinValue,
                                 'department' => null,
                                 'position' => null,
                                 'card_number' => null,
@@ -269,9 +287,7 @@ class CommandPanelController extends Controller
                 }
             } else {
                 // API mengembalikan success tapi tanpa data PIN
-                // Kemungkinan data dikirim via webhook atau mesin tidak ada PIN
-                $message = "API mengembalikan success tanpa data PIN. ";
-                $message .= "Data mungkin dikirim via webhook atau mesin tidak memiliki user terdaftar.";
+                $message = "API mengembalikan success tanpa data PIN. Response: " . json_encode($result['data']);
                 
                 CommandLog::create([
                     'command' => 'Get All PIN',
@@ -295,14 +311,14 @@ class CommandPanelController extends Controller
             'status' => $result['success'] ? 'executed' : 'failed',
             'message' => $result['success'] 
                 ? "Berhasil mengambil semua PIN. Total: {$pinCount}, Baru: {$savedCount}, Update: {$updatedCount}" 
-                : 'Gagal mengambil semua PIN',
+                : 'Gagal mengambil semua PIN: ' . ($result['message'] ?? 'Unknown error'),
         ]);
 
         return response()->json([
             'success' => $result['success'],
             'message' => $result['success'] 
                 ? "✅ Semua PIN berhasil diambil. Total: {$pinCount}, Baru: {$savedCount}, Update: {$updatedCount}" 
-                : '❌ Gagal mengambil PIN',
+                : '❌ Gagal mengambil PIN: ' . ($result['message'] ?? 'Unknown error'),
             'data' => $result,
             'saved_count' => $savedCount,
             'updated_count' => $updatedCount,

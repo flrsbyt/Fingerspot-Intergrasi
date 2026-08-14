@@ -167,11 +167,8 @@ class FingerspotService
      */
 
     public function getAllPin($cloudId)
-
     {
-
         return $this->sendRequest($cloudId, 'get_all_pin', []);
-
     }
 
 
