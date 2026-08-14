@@ -447,8 +447,13 @@
                 <div class="content-wrapper">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div></div>
-                        <div class="mono-code" style="font-size:0.7rem; background: #F3F4FF; color: #6366F1; padding: 4px 12px; border-radius: 6px;">
-                            <i class="fa-regular fa-clock me-1"></i> <span id="clock-time"></span>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="mono-code" style="font-size:0.7rem; background: #F3F4FF; color: #6366F1; padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s;" onclick="reloadPageContent(this)">
+                                <i class="fa-solid fa-rotate-right me-1"></i> Reload
+                            </button>
+                            <div class="mono-code" style="font-size:0.7rem; background: #F3F4FF; color: #6366F1; padding: 4px 12px; border-radius: 6px;">
+                                <i class="fa-regular fa-clock me-1"></i> <span id="clock-time"></span>
+                            </div>
                         </div>
                     </div>
                     
@@ -553,6 +558,39 @@ function updateClock() {
 // Update clock every second
 setInterval(updateClock, 1000);
 updateClock(); // Initial call
+
+// Reload page content without full refresh
+function reloadPageContent(btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-rotate-right fa-spin me-1"></i> Loading...';
+    
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Update the content-wrapper
+            const newContent = doc.querySelector('.content-wrapper');
+            const currentContent = document.querySelector('.content-wrapper');
+            
+            if (newContent && currentContent) {
+                currentContent.innerHTML = newContent.innerHTML;
+                
+                // Re-initialize any scripts that need to run
+                updateClock();
+            }
+        })
+        .catch(() => {
+            console.error('Failed to reload content');
+            // Fallback to full page reload if fetch fails
+            location.reload();
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-rotate-right me-1"></i> Reload';
+        });
+}
 </script>
 </body>
 </html>
