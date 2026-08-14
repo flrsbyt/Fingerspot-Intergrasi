@@ -159,6 +159,20 @@ class FingerspotService
     }
 
     /**
+     * 10. Check Multiple Connections - Cek koneksi ke multiple mesin sekaligus
+     */
+    public function checkMultipleConnections($cloudIds)
+    {
+        $results = [];
+
+        foreach ($cloudIds as $cloudId) {
+            $results[$cloudId] = $this->checkConnection($cloudId);
+        }
+
+        return $results;
+    }
+
+    /**
      * Method utama untuk mengirim request ke API Fingerspot
      */
     private function sendRequest($cloudId, $command, $params = [])

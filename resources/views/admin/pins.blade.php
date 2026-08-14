@@ -219,6 +219,59 @@
         font-weight: 600;
     }
     
+    .device-status-online {
+        background: #D1FAE5;
+        color: #059669;
+        padding: 4px 12px;
+        border-radius: 100px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .device-status-offline {
+        background: #FEE2E2;
+        color: #DC2626;
+        padding: 4px 12px;
+        border-radius: 100px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .device-status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .device-status-online .device-status-dot {
+        background: #059669;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+        animation: pulse-green 2s infinite;
+    }
+    
+    .device-status-offline .device-status-dot {
+        background: #DC2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+    }
+    
+    @keyframes pulse-green {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .device-info-text {
+        font-size: 0.7rem;
+        color: #6B7280;
+        margin-top: 2px;
+    }
+    
     /* PAGINATION CUSTOM */
     .pagination-wrapper-custom {
         display: flex;
@@ -313,8 +366,8 @@
     <h1 class="h4 m-0">🔑 Manajemen Perangkat</h1>
     <div class="header-right">
         <span class="total-badge">Total: {{ $pins->total() }}</span>
-        <span class="badge-mini {{ $deviceOnline ? 'badge-mini-success' : 'badge-mini-danger' }}">
-            {{ $deviceOnline ? 'Online' : 'Offline' }}
+        <span class="badge-mini {{ $anyDeviceOnline ? 'badge-mini-success' : 'badge-mini-danger' }}">
+            {{ $anyDeviceOnline ? 'Ada Online' : 'Semua Offline' }}
         </span>
         <button type="button" class="reload-badge" onclick="getAllPin(this)">
             <i class="fas fa-sync-alt"></i> Reload
@@ -329,7 +382,7 @@
             <form method="GET" class="row g-2 mb-3">
                 <div class="col-md-3">
                     <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Mesin Absensi</label>
-                    <select name="device" class="form-control form-control-modern">
+                    <select name="device" class="form-control form-control-modern" onchange="this.form.submit()">
                         <option value="">-- Semua Mesin --</option>
                         @php
                             $devices = App\Models\Pin::where('is_active', true)->get();
@@ -371,7 +424,16 @@
                     <button type="button" class="btn-modern btn-modern-primary w-100" onclick="getAllPin(this)">
                         <i class="fas fa-key"></i> Ambil Semua PIN
                     </button>
-                    <small class="text-muted" style="font-size: 0.7rem;">Download data user dari mesin</small>
+                    <small class="text-muted" style="font-size: 0.7rem;">⚠️ Data user dikirim via webhook</small>
+                </div>
+
+                {{-- Get Userinfo --}}
+                <div class="col-md-3">
+                    <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Ambil Data User</label>
+                    <button type="button" class="btn-modern btn-modern-success w-100" onclick="getUserinfo(this)">
+                        <i class="fas fa-users"></i> Get Userinfo
+                    </button>
+                    <small class="text-muted" style="font-size: 0.7rem;">Download data user lengkap</small>
                 </div>
 
                 {{-- Set Time --}}
@@ -449,7 +511,8 @@
                     <th>Cloud ID</th>
                     <th>Device Name</th>
                     <th>Device SN</th>
-                    <th style="width: 100px;">Status</th>
+                    <th style="width: 120px;">Status Koneksi</th>
+                    <th style="width: 100px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -460,14 +523,36 @@
                     <td>{{ $pin->device_name ?? '-' }}</td>
                     <td>{{ $pin->device_sn ?? '-' }}</td>
                     <td>
-                        <span class="{{ $pin->is_active ? 'badge-modern-success' : 'badge-modern-danger' }}">
-                            {{ $pin->is_active ? 'Online' : 'Offline' }}
-                        </span>
+                        @php
+                            $deviceStatus = $deviceStatuses[$pin->pin] ?? null;
+                            $isOnline = $deviceStatus['online'] ?? false;
+                            $lastChecked = $deviceStatus['last_checked'] ?? 'N/A';
+                            $statusCode = $deviceStatus['status_code'] ?? 'N/A';
+                        @endphp
+                        <div class="{{ $isOnline ? 'device-status-online' : 'device-status-offline' }}">
+                            <span class="device-status-dot"></span>
+                            <span>{{ $isOnline ? 'Online' : 'Offline' }}</span>
+                        </div>
+                        <div class="device-info-text">
+                            Last checked: {{ $lastChecked }} | Status: {{ $statusCode }}
+                        </div>
+                    </td>
+                    <td>
+                        <button type="button" class="btn-modern btn-modern-sm btn-modern-outline" onclick="testConnection('{{ $pin->pin }}', this)" title="Test Koneksi">
+                            <i class="fas fa-plug"></i>
+                        </button>
+                        <form action="{{ route('pins.destroy', $pin->id) }}" method="POST" style="display: inline;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-modern btn-modern-sm btn-modern-danger" onclick="return confirm('Hapus perangkat ini?')" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">
+                    <td colspan="6" class="text-center text-muted py-4">
                         <i class="fa-regular fa-database me-2"></i> Belum ada data PIN
                     </td>
                 </tr>
@@ -527,9 +612,55 @@
 @endif
 
 <script>
+// Auto-refresh device status every 30 seconds
+let refreshInterval;
+let isPageVisible = true;
+
+document.addEventListener('visibilitychange', () => {
+    isPageVisible = !document.hidden;
+    if (isPageVisible) {
+        refreshDeviceStatus();
+    }
+});
+
+function refreshDeviceStatus() {
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newStatusCells = doc.querySelectorAll('td:nth-child(5)');
+            const currentStatusCells = document.querySelectorAll('td:nth-child(5)');
+            
+            currentStatusCells.forEach((cell, index) => {
+                if (newStatusCells[index]) {
+                    cell.innerHTML = newStatusCells[index].innerHTML;
+                }
+            });
+            
+            // Update overall status badge
+            const newBadge = doc.querySelector('.badge-mini');
+            const currentBadge = document.querySelector('.badge-mini');
+            if (newBadge && currentBadge) {
+                currentBadge.className = newBadge.className;
+                currentBadge.textContent = newBadge.textContent;
+            }
+        })
+        .catch(() => {
+            console.log('Failed to refresh device status');
+        });
+}
+
+// Start auto-refresh
+refreshInterval = setInterval(() => {
+    if (isPageVisible) {
+        refreshDeviceStatus();
+    }
+}, 30000);
+
 // 1. Get All PIN (Reload)
 function getAllPin(btn) {
-    const deviceSelect = document.querySelector('select[name="pin"]')?.closest('form')?.querySelector('select[name="device"]');
+    const deviceSelect = document.querySelector('select[name="device"]');
     const deviceId = deviceSelect ? deviceSelect.value : '';
     
     if (!deviceId) {
@@ -567,9 +698,49 @@ function getAllPin(btn) {
     });
 }
 
+// 1.5 Get Userinfo
+function getUserinfo(btn) {
+    const deviceSelect = document.querySelector('select[name="device"]');
+    const deviceId = deviceSelect ? deviceSelect.value : '';
+    
+    if (!deviceId) {
+        showToast('❌ Pilih mesin absensi terlebih dahulu', 'error');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+    
+    fetch('{{ route("command.get-userinfo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ device: deviceId, pin: 'all' })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ ' + result.message, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast('❌ ' + result.message, 'error');
+        }
+    })
+    .catch(() => {
+        showToast('❌ Gagal terhubung ke server', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-users"></i> Get Userinfo';
+    });
+}
+
 // 2. Set Time
 function setTime(btn) {
-    const deviceSelect = document.querySelector('select[name="pin"]')?.closest('form')?.querySelector('select[name="device"]');
+    const deviceSelect = document.querySelector('select[name="device"]');
     const deviceId = deviceSelect ? deviceSelect.value : '';
     
     if (!deviceId) {
@@ -616,7 +787,7 @@ function setTime(btn) {
 
 // 3. Restart Mesin
 function restartMesin(btn) {
-    const deviceSelect = document.querySelector('select[name="pin"]')?.closest('form')?.querySelector('select[name="device"]');
+    const deviceSelect = document.querySelector('select[name="device"]');
     const deviceId = deviceSelect ? deviceSelect.value : '';
     
     if (!deviceId) {
@@ -676,7 +847,7 @@ function registerOnline(btn) {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
         },
-        body: JSON.stringify({ pin, name, device })
+        body: JSON.stringify({ device: device, pin: pin, name: name })
     })
     .then(response => response.json())
     .then(result => {
@@ -694,6 +865,39 @@ function registerOnline(btn) {
     .finally(() => {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-user-plus"></i> Register';
+    });
+}
+
+// 5. Test Connection per Device
+function testConnection(cloudId, btn) {
+    btn.disabled = true;
+    const originalIcon = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    
+    fetch('{{ route("pins.test-connection") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ cloud_id: cloudId })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ ' + result.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ ' + result.message, 'error');
+        }
+    })
+    .catch(() => {
+        showToast('❌ Gagal terhubung ke server', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalIcon;
     });
 }
 

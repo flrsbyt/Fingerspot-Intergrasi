@@ -234,17 +234,79 @@ class CommandPanelController extends Controller
             'response' => $result,
         ]);
 
+        // Proses dan simpan data PIN ke database lokal
+        $savedCount = 0;
+        $updatedCount = 0;
+        $pinCount = 0;
+        
+        if ($result['success']) {
+            // Cek format response API
+            if (isset($result['data']['data']) && is_array($result['data']['data'])) {
+                $pinData = $result['data']['data'];
+                $pinCount = count($pinData);
+                
+                foreach ($pinData as $pin) {
+                    // Extract PIN dari data
+                    $pinValue = is_array($pin) ? ($pin['pin'] ?? $pin['PIN'] ?? null) : $pin;
+                    
+                    if ($pinValue) {
+                        // Cek apakah sudah ada
+                        $existing = \App\Models\Userinfo::where('pin', $pinValue)->first();
+                        
+                        if ($existing) {
+                            $updatedCount++;
+                        } else {
+                            \App\Models\Userinfo::create([
+                                'pin' => $pinValue,
+                                'name' => is_array($pin) ? ($pin['name'] ?? $pin['NAME'] ?? 'User ' . $pinValue) : 'User ' . $pinValue,
+                                'department' => null,
+                                'position' => null,
+                                'card_number' => null,
+                            ]);
+                            $savedCount++;
+                        }
+                    }
+                }
+            } else {
+                // API mengembalikan success tapi tanpa data PIN
+                // Kemungkinan data dikirim via webhook atau mesin tidak ada PIN
+                $message = "API mengembalikan success tanpa data PIN. ";
+                $message .= "Data mungkin dikirim via webhook atau mesin tidak memiliki user terdaftar.";
+                
+                CommandLog::create([
+                    'command' => 'Get All PIN',
+                    'parameters' => ['cloud_id' => $cloudId],
+                    'status' => 'executed',
+                    'message' => $message,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => '⚠️ ' . $message,
+                    'data' => $result,
+                    'note' => 'PIN data akan dikirim via webhook jika ada user terdaftar di mesin',
+                ]);
+            }
+        }
+
         CommandLog::create([
             'command' => 'Get All PIN',
             'parameters' => ['cloud_id' => $cloudId],
             'status' => $result['success'] ? 'executed' : 'failed',
-            'message' => $result['success'] ? 'Berhasil mengambil semua PIN' : 'Gagal mengambil semua PIN',
+            'message' => $result['success'] 
+                ? "Berhasil mengambil semua PIN. Total: {$pinCount}, Baru: {$savedCount}, Update: {$updatedCount}" 
+                : 'Gagal mengambil semua PIN',
         ]);
 
         return response()->json([
             'success' => $result['success'],
-            'message' => $result['success'] ? '✅ Semua PIN berhasil diambil' : '❌ Gagal mengambil PIN',
-            'data' => $result
+            'message' => $result['success'] 
+                ? "✅ Semua PIN berhasil diambil. Total: {$pinCount}, Baru: {$savedCount}, Update: {$updatedCount}" 
+                : '❌ Gagal mengambil PIN',
+            'data' => $result,
+            'saved_count' => $savedCount,
+            'updated_count' => $updatedCount,
+            'total_count' => $pinCount,
         ]);
     }
 

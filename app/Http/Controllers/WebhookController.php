@@ -233,11 +233,24 @@ class WebhookController extends Controller
             Pin::truncate();
 
             foreach ($pins as $pinData) {
-                $pin = is_array($pinData) ? ($pinData['pin'] ?? $pinData['user_id'] ?? null) : $pinData;
+                // Handle different response formats from Fingerspot
+                if (is_array($pinData)) {
+                    $pin = $pinData['pin'] ?? $pinData['user_id'] ?? $pinData['cloud_id'] ?? null;
+                    $deviceName = $pinData['device_name'] ?? $pinData['name'] ?? null;
+                    $deviceSn = $pinData['device_sn'] ?? $pinData['sn'] ?? null;
+                } else {
+                    // If pinData is just a string/number, treat it as the PIN
+                    $pin = $pinData;
+                    $deviceName = null;
+                    $deviceSn = null;
+                }
 
                 if ($pin) {
                     Pin::create([
                         'pin' => $pin,
+                        'device_name' => $deviceName,
+                        'device_sn' => $deviceSn,
+                        'is_active' => true,
                         'raw_payload' => $pinData,
                     ]);
                 }

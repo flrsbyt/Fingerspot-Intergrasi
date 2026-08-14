@@ -13,6 +13,22 @@ class ChangelogController extends Controller
     {
         $changelogs = [
             [
+                'version' => '1.4.0',
+                'date' => '2024-08-14',
+                'changes' => [
+                    '🔧 Perbaikan dan peningkatan fitur Manajemen Perangkat (Pins)',
+                    '📡 Perbaikan status Online/Offline mesin absensi dengan indikator visual yang lebih jelas',
+                    '⚡ Implementasi caching untuk device status check (30 detik) untuk mengurangi API calls',
+                    '🔄 Penambahan auto-refresh device status setiap 30 detik pada halaman pins',
+                    '✅ Perbaikan fitur Get All PIN untuk handle response API yang tidak mengembalikan data PIN',
+                    '👥 Penambahan tombol Get Userinfo untuk mengambil data user lengkap dari mesin',
+                    '📊 Perbaikan filter pencarian PIN dengan support partial match',
+                    '🎨 Perbaikan tampilan status mesin dengan animasi pulse dan informasi detail',
+                    '💾 Penambahan penanganan data PIN yang dikirim via webhook otomatis',
+                    '🔍 Perbaikan error handling untuk command panel pins',
+                ]
+            ],
+            [
                 'version' => '1.3.0',
                 'date' => '2024-08-14',
                 'changes' => [

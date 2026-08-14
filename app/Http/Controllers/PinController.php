@@ -19,28 +19,78 @@ class PinController extends Controller
     {
         $query = Pin::query();
 
-        // Filter by PIN
+        // Filter by PIN (Cloud ID) - supports partial match
         if ($request->filled('pin')) {
-            $query->where('pin', $request->pin);
+            $query->where('pin', 'like', '%' . $request->pin . '%');
+        }
+
+        // Filter by specific device (using PIN field)
+        if ($request->filled('device')) {
+            $query->where('pin', $request->device);
+        }
+
+        // Filter by active status
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
         }
 
         $pins = $query->paginate(20)->withQueryString();
 
-        // Check device connection - use first active device
-        $firstDevice = $pins->first();
-        $deviceOnline = false;
-        
-        if ($firstDevice) {
-            $connectionStatus = $this->fingerspot->checkConnection($firstDevice->pin);
-            $deviceOnline = $connectionStatus['online'] ?? false;
+        // Check connection status for each device with caching
+        $deviceStatuses = [];
+        foreach ($pins as $pin) {
+            // Cache device status for 30 seconds to reduce API calls
+            $cacheKey = 'device_status_' . $pin->pin;
+            $connectionStatus = \Illuminate\Support\Facades\Cache::remember($cacheKey, 30, function() use ($pin) {
+                return $this->fingerspot->checkConnection($pin->pin);
+            });
+            
+            $deviceStatuses[$pin->pin] = [
+                'online' => $connectionStatus['online'] ?? false,
+                'status_code' => $connectionStatus['status_code'] ?? null,
+                'data' => $connectionStatus['data'] ?? null,
+                'last_checked' => now()->format('H:i:s'),
+            ];
         }
 
-        return view('admin.pins', compact('pins', 'deviceOnline'));
+        // Overall status based on any active device being online
+        $anyDeviceOnline = false;
+        foreach ($deviceStatuses as $status) {
+            if ($status['online']) {
+                $anyDeviceOnline = true;
+                break;
+            }
+        }
+
+        return view('admin.pins', compact('pins', 'deviceStatuses', 'anyDeviceOnline'));
     }
 
     public function destroy($id)
     {
         Pin::destroy($id);
         return redirect()->back()->with('message', 'PIN berhasil dihapus');
+    }
+
+    /**
+     * Test connection to a specific device
+     */
+    public function testConnection(Request $request)
+    {
+        $cloudId = $request->input('cloud_id');
+
+        if (empty($cloudId)) {
+            return response()->json([
+                'success' => false,
+                'message' => '❌ Cloud ID wajib diisi'
+            ]);
+        }
+
+        $connectionStatus = $this->fingerspot->checkConnection($cloudId);
+
+        return response()->json([
+            'success' => $connectionStatus['online'],
+            'message' => $connectionStatus['online'] ? '✅ Mesin terhubung dan online' : '❌ Mesin tidak terhubung atau offline',
+            'data' => $connectionStatus
+        ]);
     }
 }
