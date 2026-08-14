@@ -131,18 +131,23 @@ class FingerspotService
     public function checkConnection($cloudId)
     {
         try {
-            $url = "{$this->apiUrl}/{$cloudId}/get_all_pin";
+            // Gunakan get_device untuk cek koneksi sesuai dokumentasi
+            $url = "{$this->apiUrl}/get_device";
             $response = Http::timeout(5)
                 ->withHeaders([
                     'Authorization' => 'Bearer ' . $this->apiKey,
                     'Content-Type' => 'application/json',
                 ])
-                ->get($url);
+                ->post($url, [
+                    'cloud_id' => $cloudId,
+                    'trans_id' => uniqid(),
+                ]);
 
             return [
                 'success' => $response->successful(),
                 'status_code' => $response->status(),
                 'online' => $response->successful(),
+                'data' => $response->json(),
             ];
         } catch (\Exception $e) {
             return [
@@ -159,19 +164,26 @@ class FingerspotService
     private function sendRequest($cloudId, $command, $params = [])
     {
         try {
-            $url = "{$this->apiUrl}/{$cloudId}/{$command}";
+            // Format URL yang benar sesuai dokumentasi: https://developer.fingerspot.io/api/{command}
+            $url = "{$this->apiUrl}/{$command}";
+
+            // Tambahkan cloud_id dan trans_id ke params
+            $requestParams = array_merge($params, [
+                'cloud_id' => $cloudId,
+                'trans_id' => uniqid(),
+            ]);
 
             Log::info('Fingerspot API Request', [
                 'url' => $url,
                 'cloud_id' => $cloudId,
                 'command' => $command,
-                'params' => $params,
+                'params' => $requestParams,
             ]);
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
-            ])->post($url, $params);
+            ])->post($url, $requestParams);
 
             $result = [
                 'success' => $response->successful(),
