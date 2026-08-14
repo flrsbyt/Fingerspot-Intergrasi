@@ -71,32 +71,28 @@ class RealtimeController extends Controller
      */
     public function deviceStatus()
     {
-        // Cache device status for 30 seconds to reduce API calls
-        $deviceStatuses = Cache::remember('device_status_all', 30, function() {
-            $devices = Pin::where('is_active', true)->get(['id', 'pin', 'device_name']);
-            $statuses = [];
+        // Tanpa caching untuk real-time status yang lebih akurat
+        $devices = Pin::where('is_active', true)->get(['id', 'pin', 'device_name']);
+        $statuses = [];
 
-            foreach ($devices as $device) {
-                $connectionStatus = $this->fingerspot->checkConnection($device->pin);
-                
-                $statuses[] = [
-                    'id' => $device->id,
-                    'pin' => $device->pin,
-                    'device_name' => $device->device_name,
-                    'online' => $connectionStatus['online'] ?? false,
-                    'last_checked' => now()->format('H:i:s'),
-                    'status_code' => $connectionStatus['status_code'] ?? null,
-                ];
-            }
-
-            return $statuses;
-        });
+        foreach ($devices as $device) {
+            $connectionStatus = $this->fingerspot->checkConnection($device->pin);
+            
+            $statuses[] = [
+                'id' => $device->id,
+                'pin' => $device->pin,
+                'device_name' => $device->device_name,
+                'online' => $connectionStatus['online'] ?? false,
+                'last_checked' => now()->format('H:i:s'),
+                'status_code' => $connectionStatus['status_code'] ?? null,
+            ];
+        }
 
         return response()->json([
             'success' => true,
-            'devices' => $deviceStatuses,
-            'total_online' => collect($deviceStatuses)->where('online', true)->count(),
-            'total_offline' => collect($deviceStatuses)->where('online', false)->count(),
+            'devices' => $statuses,
+            'total_online' => collect($statuses)->where('online', true)->count(),
+            'total_offline' => collect($statuses)->where('online', false)->count(),
         ]);
     }
 
@@ -105,24 +101,31 @@ class RealtimeController extends Controller
      */
     public function systemStats()
     {
-        // Cache stats for 60 seconds
-        $stats = Cache::remember('system_stats', 60, function() {
-            $totalAttlogs = Attlog::count();
-            $todayAttlogs = Attlog::whereDate('scan_time', today())->count();
-            $devices = Pin::where('is_active', true)->count();
-            
-            // Get cached device status instead of checking each device
-            $deviceStatuses = Cache::get('device_status_all', []);
-            $onlineDevices = collect($deviceStatuses)->where('online', true)->count();
-
-            return [
-                'total_attlogs' => $totalAttlogs,
-                'today_attlogs' => $todayAttlogs,
-                'total_devices' => $devices,
-                'online_devices' => $onlineDevices,
-                'offline_devices' => $devices - $onlineDevices,
+        // Tanpa caching untuk real-time stats yang lebih akurat
+        $totalAttlogs = Attlog::count();
+        $todayAttlogs = Attlog::whereDate('scan_time', today())->count();
+        $devices = Pin::where('is_active', true)->count();
+        
+        // Check device status secara real-time
+        $deviceStatuses = [];
+        $activeDevices = Pin::where('is_active', true)->get(['id', 'pin', 'device_name']);
+        
+        foreach ($activeDevices as $device) {
+            $connectionStatus = $this->fingerspot->checkConnection($device->pin);
+            $deviceStatuses[] = [
+                'online' => $connectionStatus['online'] ?? false,
             ];
-        });
+        }
+        
+        $onlineDevices = collect($deviceStatuses)->where('online', true)->count();
+
+        $stats = [
+            'total_attlogs' => $totalAttlogs,
+            'today_attlogs' => $todayAttlogs,
+            'total_devices' => $devices,
+            'online_devices' => $onlineDevices,
+            'offline_devices' => $devices - $onlineDevices,
+        ];
 
         return response()->json([
             'success' => true,

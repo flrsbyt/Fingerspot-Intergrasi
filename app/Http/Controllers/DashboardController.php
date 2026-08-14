@@ -58,26 +58,24 @@ class DashboardController extends Controller
         
         $latestApiRequests = ApiRequest::latest()->take(5)->get();
 
-        // Device status dengan caching
-        $deviceStatus = Cache::remember('device_status_dashboard', 30, function() {
-            $devices = Pin::where('is_active', true)->get(['id', 'pin', 'device_name']);
-            $statusData = [];
+        // Device status - tanpa caching untuk real-time status
+        $devices = Pin::where('is_active', true)->get(['id', 'pin', 'device_name']);
+        $statusData = [];
 
-            foreach ($devices as $device) {
-                $connectionStatus = $this->fingerspot->checkConnection($device->pin);
-                
-                $statusData[] = [
-                    'id' => $device->id,
-                    'pin' => $device->pin,
-                    'device_name' => $device->device_name,
-                    'online' => $connectionStatus['online'] ?? false,
-                    'status_code' => $connectionStatus['status_code'] ?? null,
-                    'last_checked' => now()->format('H:i:s'),
-                ];
-            }
+        foreach ($devices as $device) {
+            $connectionStatus = $this->fingerspot->checkConnection($device->pin);
+            
+            $statusData[] = [
+                'id' => $device->id,
+                'pin' => $device->pin,
+                'device_name' => $device->device_name,
+                'online' => $connectionStatus['online'] ?? false,
+                'status_code' => $connectionStatus['status_code'] ?? null,
+                'last_checked' => now()->format('H:i:s'),
+            ];
+        }
 
-            return $statusData;
-        });
+        $deviceStatus = $statusData;
 
         // Statistik verifikasi methods
         $verifyStats = Cache::remember('verify_stats', 120, function() {
