@@ -545,27 +545,6 @@
                 </button>
                 <small class="text-muted" style="font-size: 0.7rem;">Download data user lengkap</small>
             </div>
-
-            {{-- Set Time --}}
-            <div class="col-md-3">
-                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Atur Waktu</label>
-                <div class="d-flex gap-2">
-                    <input type="datetime-local" id="timezoneInput" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" value="{{ date('Y-m-d\TH:i') }}">
-                    <button type="button" class="btn-custom btn-custom-warning" onclick="setTime(this)" title="Set Waktu Mesin">
-                        <i class="fas fa-clock"></i>
-                    </button>
-                </div>
-                <small class="text-muted" style="font-size: 0.7rem;">Sinkronisasi waktu mesin</small>
-            </div>
-
-            {{-- Restart Mesin --}}
-            <div class="col-md-3">
-                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Restart</label>
-                <button type="button" class="btn-custom btn-custom-danger w-100" onclick="restartMesin(this)">
-                    <i class="fas fa-power-off"></i> Restart Mesin
-                </button>
-                <small class="text-muted" style="font-size: 0.7rem;">⚠️ Mesin akan restart otomatis</small>
-            </div>
         </div>
 
         <hr class="my-3" style="border-color: #E6E8EC;">
@@ -738,93 +717,7 @@ function getUserinfo(btn) {
     });
 }
 
-// 3. Set Time
-function setTime(btn) {
-    const deviceId = document.getElementById('controlDevice').value;
-    
-    if (!deviceId) {
-        showToast('❌ Silakan pilih mesin terlebih dahulu', 'error');
-        return;
-    }
-    
-    const input = document.getElementById('timezoneInput');
-    const timezone = input.value;
-    
-    if (!timezone) {
-        showToast('⚠️ Pilih waktu terlebih dahulu!', 'warning');
-        return;
-    }
-    
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-    
-    fetch('{{ route("command.set-time") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({ device: deviceId, timezone: timezone })
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            showToast('✅ ' + result.message, 'success');
-        } else {
-            showToast('❌ ' + result.message, 'error');
-        }
-    })
-    .catch(() => {
-        showToast('❌ Gagal terhubung ke server', 'error');
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-clock"></i>';
-    });
-}
-
-// 4. Restart Mesin
-function restartMesin(btn) {
-    const deviceId = document.getElementById('controlDevice').value;
-    
-    if (!deviceId) {
-        showToast('❌ Silakan pilih mesin terlebih dahulu', 'error');
-        return;
-    }
-    
-    if (!confirm('⚠️ Yakin mau restart mesin?')) return;
-    
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
-    
-    fetch('{{ route("command.restart-mesin") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({ device: deviceId })
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            showToast('✅ ' + result.message, 'success');
-        } else {
-            showToast('❌ ' + result.message, 'error');
-        }
-    })
-    .catch(() => {
-        showToast('❌ Gagal terhubung ke server', 'error');
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-power-off"></i> Restart Mesin';
-    });
-}
-
-// 5. Register Online
+// 3. Register Online
 function registerOnline(btn) {
     const pin = document.getElementById('registerPin').value;
     const verification = document.getElementById('registerVerification').value;
