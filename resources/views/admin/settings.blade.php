@@ -535,9 +535,12 @@
                 </button>
             </div>
             <div class="col-md-6">
-                <button type="button" class="btn-custom btn-custom-success w-100" onclick="getUserinfo(this)">
-                    <i class="fas fa-users me-2"></i> Get Userinfo
-                </button>
+                <div class="input-group">
+                    <input type="text" id="userinfoPin" class="form-control" style="font-size: 0.9rem; border: 1px solid #E5E7EB; border-radius: 8px 0 0 8px; padding: 10px 14px;" placeholder="PIN (kosongkan untuk semua)">
+                    <button type="button" class="btn-custom btn-custom-success" style="border-radius: 0 8px 8px 0;" onclick="getUserinfo(this)">
+                        <i class="fas fa-users me-2"></i> Get Userinfo
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -669,6 +672,8 @@ function getAllPin(btn) {
 // 2. Get Userinfo
 function getUserinfo(btn) {
     const deviceId = document.getElementById('controlDevice').value;
+    const pinInput = document.getElementById('userinfoPin');
+    const pin = pinInput ? pinInput.value.trim() : 'all';
     
     if (!deviceId) {
         showToast('❌ Silakan pilih mesin terlebih dahulu', 'error');
@@ -685,7 +690,7 @@ function getUserinfo(btn) {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
         },
-        body: JSON.stringify({ device: deviceId, pin: 'all' })
+        body: JSON.stringify({ device: deviceId, pin: pin })
     })
     .then(response => response.json())
     .then(result => {
@@ -700,7 +705,7 @@ function getUserinfo(btn) {
     })
     .finally(() => {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-users"></i> Get Userinfo';
+        btn.innerHTML = '<i class="fas fa-users me-2"></i> Get Userinfo';
     });
 }
 
