@@ -342,10 +342,8 @@
                         <i class="fas fa-filter"></i> Filter
                     </button>
                 </div>
-                <div class="col-md-1">
-                    <a href="{{ route('userinfos.index') }}" class="btn-modern btn-modern-outline w-100" title="Reset Filter">
-                        <i class="fas fa-undo"></i>
-                    </a>
+                <div class="col-md-2">
+                    <!-- Reset filter removed -->
                 </div>
             </form>
         </div>
