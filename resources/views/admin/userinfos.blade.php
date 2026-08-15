@@ -578,6 +578,8 @@ function getUserinfo(btn) {
     const pinInput = document.getElementById('userinfoPin');
     const pin = pinInput ? pinInput.value.trim() : 'all';
     
+    console.log('Get Userinfo Request:', { deviceId, pin });
+    
     if (!deviceId) {
         showToast('❌ Silakan pilih mesin terlebih dahulu', 'error');
         return;
@@ -602,14 +604,18 @@ function getUserinfo(btn) {
     })
     .then(response => response.json())
     .then(result => {
+        console.log('Get Userinfo Response:', result);
         if (result.success) {
             showToast('✅ ' + result.message, 'success');
         } else {
             showToast('❌ ' + result.message, 'error');
+            alert('Error: ' + result.message);
         }
     })
-    .catch(() => {
+    .catch(error => {
+        console.error('Get Userinfo Error:', error);
         showToast('❌ Gagal terhubung ke server', 'error');
+        alert('Error: ' + error.message);
     })
     .finally(() => {
         btn.disabled = false;

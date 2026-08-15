@@ -89,7 +89,16 @@ class FingerspotService
             'original_params' => $params,
         ]);
 
-        return $this->sendRequest($cloudId, 'get_userinfo', ['pin' => $pin]);
+        $result = $this->sendRequest($cloudId, 'get_userinfo', ['pin' => $pin]);
+        
+        // Log detailed response for debugging
+        Log::info('Get Userinfo Raw Response', [
+            'cloud_id' => $cloudId,
+            'pin' => $pin,
+            'result' => $result,
+        ]);
+        
+        return $result;
 
     }
 
