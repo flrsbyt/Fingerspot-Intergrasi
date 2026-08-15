@@ -78,6 +78,7 @@ class WebhookController extends Controller
                 break;
 
             case 'get_all_pin':
+            case 'get_userid_list':
                 $processed = $this->processGetAllPin($payload);
                 break;
 
@@ -296,8 +297,19 @@ class WebhookController extends Controller
     {
         Log::info('Processing Get All PIN Webhook', ['payload' => $payload]);
 
-        // Handle different response formats from Fingerspot
-        $pins = $payload['pins'] ?? $payload['data'] ?? $payload['users'] ?? $payload['userinfos'] ?? [];
+        // Handle format yang benar dari Fingerspot: { "type": "get_userid_list", "data": { "total": 2, "pin_arr": ["1", "2"] } }
+        $pins = [];
+        
+        // Format 1: get_userid_list dengan data.pin_arr
+        if (isset($payload['type']) && $payload['type'] === 'get_userid_list' && isset($payload['data']['pin_arr'])) {
+            $pins = $payload['data']['pin_arr'];
+            Log::info('Using get_userid_list format with pin_arr', ['pins' => $pins]);
+        }
+        // Format 2: Legacy format fallback
+        else {
+            $pins = $payload['pins'] ?? $payload['data'] ?? $payload['users'] ?? $payload['userinfos'] ?? [];
+            Log::info('Using legacy format fallback', ['pins' => $pins]);
+        }
 
         if (!empty($pins)) {
             // Hapus semua PIN lama, lalu simpan yang baru
@@ -326,6 +338,7 @@ class WebhookController extends Controller
                         'raw_payload' => $pinData,
                     ]);
                     $pinsProcessed++;
+                    Log::info('PIN created', ['pin' => $pin]);
                 }
             }
 
