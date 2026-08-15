@@ -513,89 +513,76 @@
             </span>
         </div>
 
-        <div class="row g-3 align-items-end">
-            {{-- Device Selection --}}
-            <div class="col-md-3">
-                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Pilih Mesin *</label>
-                <select id="controlDevice" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" required>
-                    <option value="">-- Pilih Mesin --</option>
-                    @php
-                        $devices = App\Models\Pin::where('is_active', true)->get();
-                    @endphp
-                    @foreach($devices as $device)
-                        <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
-                    @endforeach
-                </select>
-            </div>
+        <!-- Device Selection -->
+        <div class="mb-4">
+            <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #374151;">Pilih Mesin</label>
+            <select id="controlDevice" class="form-control" style="font-size: 0.9rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 14px;">
+                <option value="">-- Pilih Mesin --</option>
+                @php
+                    $devices = App\Models\Pin::where('is_active', true)->get();
+                @endphp
+                @foreach($devices as $device)
+                    <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                @endforeach
+            </select>
+        </div>
 
-            {{-- Ambil Semua PIN --}}
-            <div class="col-md-3">
-                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Sinkronisasi Data</label>
+        <!-- Action Buttons -->
+        <div class="row g-3">
+            <div class="col-md-6">
                 <button type="button" class="btn-custom btn-custom-primary w-100" onclick="getAllPin(this)">
-                    <i class="fas fa-key"></i> Ambil Semua PIN
+                    <i class="fas fa-key me-2"></i> Ambil Semua PIN
                 </button>
-                <small class="text-muted" style="font-size: 0.7rem;">Download data user dari mesin</small>
             </div>
-
-            {{-- Get Userinfo --}}
-            <div class="col-md-3">
-                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Ambil Data User</label>
+            <div class="col-md-6">
                 <button type="button" class="btn-custom btn-custom-success w-100" onclick="getUserinfo(this)">
-                    <i class="fas fa-users"></i> Get Userinfo
-                </button>
-                <small class="text-muted" style="font-size: 0.7rem;">Download data user lengkap</small>
-            </div>
-        </div>
-
-        <hr class="my-3" style="border-color: #E6E8EC;">
-
-        <h6 style="font-size: 0.75rem; font-weight: 600; color: #6B7280; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">
-            <i class="fas fa-user-plus me-1"></i> Register User Online
-        </h6>
-
-        <div class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">PIN *</label>
-                <input type="text" id="registerPin" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" placeholder="Contoh: 1" required>
-            </div>
-            <div class="col-md-3">
-                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Tipe Biometrik *</label>
-                <select id="registerVerification" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" required>
-                    <option value="">-- Pilih --</option>
-                    <option value="0">0</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="12">12 (Wajah)</option>
-                    <option value="13">13 (Vein)</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Mesin *</label>
-                <select id="registerDevice" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" required>
-                    <option value="">-- Pilih Mesin --</option>
-                    @php
-                        $devices = App\Models\Pin::where('is_active', true)->get();
-                    @endphp
-                    @foreach($devices as $device)
-                        <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">&nbsp;</label>
-                <button type="button" class="btn-custom btn-custom-success w-100" onclick="registerOnline(this)">
-                    <i class="fas fa-user-plus"></i> Register
+                    <i class="fas fa-users me-2"></i> Get Userinfo
                 </button>
             </div>
         </div>
-        <small class="text-muted" style="font-size: 0.7rem;">Registrasi user langsung ke mesin absensi</small>
+
+        <!-- Register User Online -->
+        <div class="mt-4 pt-4" style="border-top: 1px solid #E6E8EC;">
+            <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; color: #374151;">Register User Online</label>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" id="registerPin" class="form-control" style="font-size: 0.9rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 14px;" placeholder="PIN" required>
+                </div>
+                <div class="col-md-3">
+                    <select id="registerVerification" class="form-control" style="font-size: 0.9rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 14px;" required>
+                        <option value="">Tipe Biometrik</option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="12">12 (Wajah)</option>
+                        <option value="13">13 (Vein)</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select id="registerDevice" class="form-control" style="font-size: 0.9rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 14px;" required>
+                        <option value="">Pilih Mesin</option>
+                        @php
+                            $devices = App\Models\Pin::where('is_active', true)->get();
+                        @endphp
+                        @foreach($devices as $device)
+                            <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn-custom btn-custom-success w-100" onclick="registerOnline(this)">
+                        <i class="fas fa-plus"></i> Register
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
 </div>
