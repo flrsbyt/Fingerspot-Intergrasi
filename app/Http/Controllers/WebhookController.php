@@ -150,12 +150,62 @@ class WebhookController extends Controller
 
     private function processUserinfo($payload)
     {
-        // Extract data user
-        $pin = $payload['pin'] ?? $payload['user_id'] ?? null;
-        $name = $payload['name'] ?? $payload['fullname'] ?? null;
-        $department = $payload['department'] ?? null;
-        $position = $payload['position'] ?? null;
-        $cardNumber = $payload['card_number'] ?? null;
+        Log::info('Processing Userinfo Webhook', ['payload' => $payload]);
+
+        // Handle different response formats from Fingerspot
+        // Format 1: Direct userinfo data
+        $userInfo = $payload;
+        
+        // Format 2: Nested in 'data' key
+        if (isset($payload['data']) && is_array($payload['data'])) {
+            $userInfo = $payload['data'];
+        }
+        
+        // Format 3: Multiple users in 'users' or 'userinfos' array
+        if (isset($payload['users']) && is_array($payload['users'])) {
+            $usersProcessed = 0;
+            foreach ($payload['users'] as $user) {
+                $this->processSingleUserinfo($user);
+                $usersProcessed++;
+            }
+            return [
+                'type' => 'userinfo',
+                'total_processed' => $usersProcessed,
+            ];
+        }
+        
+        // Format 4: Multiple users in 'userinfos' array
+        if (isset($payload['userinfos']) && is_array($payload['userinfos'])) {
+            $usersProcessed = 0;
+            foreach ($payload['userinfos'] as $user) {
+                $this->processSingleUserinfo($user);
+                $usersProcessed++;
+            }
+            return [
+                'type' => 'userinfo',
+                'total_processed' => $usersProcessed,
+            ];
+        }
+
+        // Process single user
+        return $this->processSingleUserinfo($userInfo);
+    }
+
+    private function processSingleUserinfo($userInfo)
+    {
+        // Extract data user with multiple fallback options
+        $pin = $userInfo['pin'] ?? $userInfo['user_id'] ?? $userInfo['PIN'] ?? null;
+        $name = $userInfo['name'] ?? $userInfo['fullname'] ?? $userInfo['full_name'] ?? null;
+        $department = $userInfo['department'] ?? $userInfo['dept'] ?? null;
+        $position = $userInfo['position'] ?? $userInfo['job_title'] ?? null;
+        $cardNumber = $userInfo['card_number'] ?? $userInfo['card'] ?? null;
+
+        Log::info('Processing Single Userinfo', [
+            'pin' => $pin,
+            'name' => $name,
+            'department' => $department,
+            'position' => $position,
+        ]);
 
         if ($pin && $name) {
             Userinfo::updateOrCreate(
@@ -165,9 +215,17 @@ class WebhookController extends Controller
                     'department' => $department,
                     'position' => $position,
                     'card_number' => $cardNumber,
-                    'raw_payload' => $payload,
+                    'raw_payload' => $userInfo,
                 ]
             );
+            
+            Log::info('Userinfo saved successfully', ['pin' => $pin]);
+        } else {
+            Log::warning('Failed to process userinfo - missing required fields', [
+                'pin' => $pin,
+                'name' => $name,
+                'data' => $userInfo
+            ]);
         }
 
         return [
@@ -236,18 +294,22 @@ class WebhookController extends Controller
 
     private function processGetAllPin($payload)
     {
-        $pins = $payload['pins'] ?? $payload['data'] ?? [];
+        Log::info('Processing Get All PIN Webhook', ['payload' => $payload]);
+
+        // Handle different response formats from Fingerspot
+        $pins = $payload['pins'] ?? $payload['data'] ?? $payload['users'] ?? $payload['userinfos'] ?? [];
 
         if (!empty($pins)) {
             // Hapus semua PIN lama, lalu simpan yang baru
             Pin::truncate();
 
+            $pinsProcessed = 0;
             foreach ($pins as $pinData) {
                 // Handle different response formats from Fingerspot
                 if (is_array($pinData)) {
-                    $pin = $pinData['pin'] ?? $pinData['user_id'] ?? $pinData['cloud_id'] ?? null;
-                    $deviceName = $pinData['device_name'] ?? $pinData['name'] ?? null;
-                    $deviceSn = $pinData['device_sn'] ?? $pinData['sn'] ?? null;
+                    $pin = $pinData['pin'] ?? $pinData['user_id'] ?? $pinData['cloud_id'] ?? $pinData['PIN'] ?? null;
+                    $deviceName = $pinData['device_name'] ?? $pinData['name'] ?? $pinData['device_name'] ?? null;
+                    $deviceSn = $pinData['device_sn'] ?? $pinData['sn'] ?? $pinData['serial_number'] ?? null;
                 } else {
                     // If pinData is just a string/number, treat it as the PIN
                     $pin = $pinData;
@@ -263,8 +325,13 @@ class WebhookController extends Controller
                         'is_active' => true,
                         'raw_payload' => $pinData,
                     ]);
+                    $pinsProcessed++;
                 }
             }
+
+            Log::info('Get All PIN processed successfully', ['total_pins' => $pinsProcessed]);
+        } else {
+            Log::warning('No pins found in webhook payload', ['payload' => $payload]);
         }
 
         // Cari API request yang pending

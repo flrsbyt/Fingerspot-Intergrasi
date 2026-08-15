@@ -71,9 +71,11 @@ class CommandPanelController extends Controller
         \Log::info('Get Userinfo Request', [
             'cloud_id' => $cloudId,
             'pin' => $pin,
+            'all_request_data' => $request->all(),
         ]);
 
         if (empty($cloudId)) {
+            \Log::warning('Get Userinfo failed - missing cloud_id');
             return response()->json([
                 'success' => false,
                 'message' => '❌ Mesin absensi wajib dipilih'
@@ -86,6 +88,11 @@ class CommandPanelController extends Controller
                 'payload' => ['cloud_id' => $cloudId, 'pin' => $pin],
                 'status' => 'pending',
                 'request_id' => 'req_' . uniqid(),
+            ]);
+
+            \Log::info('Calling Fingerspot Service getUserinfo', [
+                'cloud_id' => $cloudId,
+                'pin' => $pin,
             ]);
 
             $result = $this->fingerspot->getUserinfo($cloudId, ['pin' => $pin]);
@@ -259,7 +266,13 @@ class CommandPanelController extends Controller
     {
         $cloudId = $request->input('device');
 
+        \Log::info('Get All PIN Request', [
+            'cloud_id' => $cloudId,
+            'all_request_data' => $request->all(),
+        ]);
+
         if (empty($cloudId)) {
+            \Log::warning('Get All PIN failed - missing cloud_id');
             return response()->json([
                 'success' => false,
                 'message' => '❌ Mesin absensi wajib dipilih'
@@ -273,7 +286,15 @@ class CommandPanelController extends Controller
             'request_id' => 'req_' . uniqid(),
         ]);
 
+        \Log::info('Calling Fingerspot Service getAllPin', [
+            'cloud_id' => $cloudId,
+        ]);
+
         $result = $this->fingerspot->getAllPin($cloudId);
+
+        \Log::info('Get All PIN API Result', [
+            'result' => $result,
+        ]);
 
         $apiRequest->update([
             'status' => $result['success'] ? 'success' : 'failed',
