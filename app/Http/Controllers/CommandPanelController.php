@@ -469,9 +469,18 @@ class CommandPanelController extends Controller
                 'message' => 'Gagal mengirim permintaan register: ' . ($result['message'] ?? 'Unknown error'),
             ]);
 
+            // Return detailed error information
+            $errorMessage = $result['message'] ?? 'Unknown error';
+            if (isset($result['data']) && is_array($result['data'])) {
+                $errorMessage .= ' - ' . json_encode($result['data']);
+            }
+            if (isset($result['raw'])) {
+                $errorMessage .= ' - Raw: ' . substr($result['raw'], 0, 200);
+            }
+
             return response()->json([
                 'success' => false,
-                'message' => '❌ Gagal mengirim permintaan register: ' . ($result['message'] ?? 'Unknown error'),
+                'message' => '❌ Gagal mengirim permintaan register: ' . $errorMessage,
                 'data' => $result
             ]);
         } catch (\Exception $e) {
