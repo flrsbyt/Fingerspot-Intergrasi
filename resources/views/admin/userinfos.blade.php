@@ -694,7 +694,6 @@ function hapusUser(btn, pin) {
     .then(result => {
         if (result.success) {
             showToast('✅ ' + result.message, 'success');
-            setTimeout(() => location.reload(), 1500);
         } else {
             showToast('❌ ' + result.message, 'error');
         }
