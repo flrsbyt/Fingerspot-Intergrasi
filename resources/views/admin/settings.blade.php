@@ -4,43 +4,51 @@
 
 @section('content')
 <style>
-    /* ===== HEADER ===== */
-    .settings-header h1 {
+    .page-header h1 {
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-weight: 700;
         color: #0B0F19;
-        font-size: 1.4rem;
         margin: 0;
     }
-    .settings-header .subtitle {
-        font-size: 0.85rem;
-        color: #6B7280;
+    
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
     
-    /* ===== CARD ===== */
+    .total-badge {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        background: #F3F4FF;
+        color: #6366F1;
+        padding: 6px 14px;
+        border-radius: 100px;
+        font-weight: 500;
+    }
+    
     .settings-card {
         background: #FFFFFF;
-        border: 1px solid #EEF0F4;
-        border-radius: 16px;
-        padding: 22px 24px;
+        border: 1px solid #E6E8EC;
+        border-radius: 14px;
+        padding: 20px 24px;
         transition: all 0.25s ease;
         height: 100%;
     }
     .settings-card:hover {
-        border-color: #D1D5DB;
+        border-color: #9FA1FF;
     }
     
     .settings-card .card-title {
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-weight: 600;
         font-size: 0.85rem;
-        color: #111827;
+        color: #0B0F19;
         margin-bottom: 16px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-        letter-spacing: -0.01em;
     }
     .settings-card .card-title .title-left {
         display: flex;
@@ -50,13 +58,54 @@
     .settings-card .card-title i {
         color: #6366F1;
         font-size: 1rem;
-        width: 20px;
-        text-align: center;
+    }
+    
+    .btn-modern {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        border: none;
+        text-decoration: none;
+    }
+    
+    .btn-modern-primary {
+        background: #6366F1;
+        color: #FFFFFF;
+    }
+    .btn-modern-primary:hover {
+        background: #4F46E5;
+        color: #FFFFFF;
+    }
+    
+    .btn-modern-outline {
+        background: transparent;
+        color: #6366F1;
+        border: 1px solid #E6E8EC;
+    }
+    .btn-modern-outline:hover {
+        background: #F3F4FF;
+        border-color: #6366F1;
+    }
+    
+    .btn-modern-success {
+        background: #10B981;
+        color: #FFFFFF;
+    }
+    .btn-modern-success:hover {
+        background: #059669;
+        color: #FFFFFF;
     }
     
     .btn-edit {
         background: transparent;
-        border: 1px solid #E5E7EB;
+        border: 1px solid #E6E8EC;
         border-radius: 8px;
         padding: 4px 12px;
         font-size: 0.7rem;
@@ -74,11 +123,10 @@
         color: #6366F1;
     }
     
-    /* ===== DISPLAY DATA ===== */
     .data-row {
         display: flex;
         padding: 8px 0;
-        border-bottom: 1px solid #F5F6F8;
+        border-bottom: 1px solid #F3F4F6;
     }
     .data-row:last-child {
         border-bottom: none;
@@ -92,24 +140,102 @@
     }
     .data-row .value {
         font-size: 0.82rem;
-        color: #111827;
+        color: #1F2937;
         font-weight: 500;
         word-break: break-all;
     }
     .data-row .value code {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.7rem;
+        font-size: 0.75rem;
         background: #F3F4FF;
         color: #6366F1;
-        padding: 2px 8px;
+        padding: 2px 6px;
         border-radius: 4px;
     }
-    .data-row .value.text-muted {
-        color: #9CA3AF;
-        font-weight: 400;
+    
+    .form-control-modern {
+        border: 1px solid #E6E8EC;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+    .form-control-modern:focus {
+        border-color: #9FA1FF;
+        box-shadow: 0 0 0 3px rgba(159, 161, 255, 0.1);
+        outline: none;
     }
     
-    /* ===== FORM DALAM MODAL ===== */
+    .table-modern {
+        background: #FFFFFF;
+        border: 1px solid #E6E8EC;
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    
+    .table-modern thead th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6B7280;
+        font-weight: 600;
+        border-bottom: 2px solid #E6E8EC;
+        padding: 18px 16px;
+        background: #FAFAFC;
+    }
+    
+    .table-modern tbody td {
+        padding: 16px;
+        color: #1F2937;
+        border-bottom: 1px solid #F3F4F6;
+        font-size: 0.9rem;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #FAFAFC;
+    }
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .mono-code {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.78rem;
+        background: #F3F4FF;
+        color: #6366F1;
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+    
+    /* MODAL */
+    .modal-modern .modal-content {
+        border: 1px solid #E6E8EC;
+        border-radius: 16px;
+    }
+    .modal-modern .modal-header {
+        border-bottom: 1px solid #E6E8EC;
+        padding: 20px 24px;
+    }
+    .modal-modern .modal-title {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 700;
+        color: #0B0F19;
+    }
+    .modal-modern .modal-body {
+        padding: 24px;
+    }
+    .modal-modern .modal-footer {
+        border-top: 1px solid #E6E8EC;
+        padding: 16px 24px;
+    }
+    
+    .form-label-modern {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+    
     .form-group-modal {
         margin-bottom: 14px;
     }
@@ -125,333 +251,34 @@
     }
     .form-control-modal {
         width: 100%;
-        padding: 8px 12px;
-        font-size: 0.82rem;
-        border: 1px solid #E5E7EB;
-        border-radius: 10px;
-        background: #F9FAFB;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        border: 1px solid #E6E8EC;
+        border-radius: 8px;
+        background: #FFFFFF;
         transition: all 0.2s ease;
-        color: #111827;
+        color: #1F2937;
     }
     .form-control-modal:focus {
-        border-color: #6366F1;
+        border-color: #9FA1FF;
         background: #FFFFFF;
         outline: none;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.10);
+        box-shadow: 0 0 0 3px rgba(159, 161, 255, 0.1);
     }
     textarea.form-control-modal {
         resize: vertical;
         min-height: 60px;
         font-family: 'Inter', sans-serif;
     }
-    
-    /* ===== BUTTONS ===== */
-    .btn-custom {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 8px 18px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        border: none;
-        border-radius: 10px;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        text-decoration: none;
-        min-height: 38px;
-        font-family: 'Inter', sans-serif;
-    }
-    .btn-custom-primary {
-        background: #6366F1;
-        color: #FFFFFF;
-    }
-    .btn-custom-primary:hover {
-        background: #4F46E5;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
-    }
-    .btn-custom-success {
-        background: #10B981;
-        color: #FFFFFF;
-    }
-    .btn-custom-success:hover {
-        background: #059669;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
-    }
-    .btn-custom-warning {
-        background: #F59E0B;
-        color: #FFFFFF;
-    }
-    .btn-custom-warning:hover {
-        background: #D97706;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
-    }
-    .btn-custom-danger {
-        background: #EF4444;
-        color: #FFFFFF;
-    }
-    .btn-custom-danger:hover {
-        background: #DC2626;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
-    }
-    .btn-custom-outline {
-        background: transparent;
-        color: #6366F1;
-        border: 1px solid #E5E7EB;
-    }
-    .btn-custom-outline:hover {
-        background: #F3F4FF;
-        border-color: #6366F1;
-    }
-    .btn-custom-sm {
-        padding: 5px 10px;
-        font-size: 0.7rem;
-        min-height: 32px;
-        min-width: 32px;
-        border-radius: 8px;
-    }
-    .btn-custom-block {
-        width: 100%;
-    }
-    
-    /* ===== DIVIDER ===== */
-    .divider-light {
-        border: none;
-        border-top: 1px solid #F0F2F5;
-        margin: 14px 0;
-    }
-    
-    /* ===== DEVICE STATUS ===== */
-    .device-status-box {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 14px;
-        background: #F9FAFB;
-        border-radius: 12px;
-        border: 1px solid #F0F2F5;
-        font-size: 0.8rem;
-    }
-    .device-status-box .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-        flex-shrink: 0;
-    }
-    .device-status-box .dot.online {
-        background: #10B981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.20);
-    }
-    .device-status-box .dot.offline {
-        background: #EF4444;
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.20);
-    }
-    .device-status-box .status-label {
-        font-weight: 500;
-        color: #111827;
-    }
-    .device-status-box .status-meta {
-        margin-left: auto;
-        color: #6B7280;
-        font-size: 0.75rem;
-    }
-    
-    /* ===== BADGE MINI ===== */
-    .badge-mini {
-        display: inline-block;
-        padding: 2px 10px;
-        border-radius: 100px;
-        font-size: 0.6rem;
-        font-weight: 600;
-    }
-    .badge-mini-success {
-        background: #D1FAE5;
-        color: #059669;
-    }
-    .badge-mini-danger {
-        background: #FEE2E2;
-        color: #DC2626;
-    }
-    
-    /* ===== TABLE PERANGKAT ===== */
-    .table-device {
-        font-size: 0.75rem;
-        margin: 0;
-    }
-    .table-device thead th {
-        font-size: 0.6rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #6B7280;
-        font-weight: 600;
-        padding: 6px 0 4px 0;
-        border-bottom: 1px solid #F0F2F5;
-        background: transparent;
-    }
-    .table-device tbody td {
-        padding: 6px 0;
-        border-bottom: 1px solid #F5F6F8;
-        color: #1F2937;
-        vertical-align: middle;
-    }
-    .table-device tbody tr:last-child td {
-        border-bottom: none;
-    }
-    .table-device code {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.65rem;
-        background: #F3F4FF;
-        color: #6366F1;
-        padding: 2px 6px;
-        border-radius: 4px;
-    }
-    
-    /* ===== INFO BOX ===== */
-    .info-box {
-        background: linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%);
-        border: 1px solid #FCD34D;
-        border-radius: 12px;
-        padding: 20px 24px;
-        margin-top: 24px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .info-box ul {
-        margin: 0;
-        padding-left: 20px;
-        font-size: 0.85rem;
-        color: #92400E;
-        list-style: disc;
-    }
-    .info-box ul li + li {
-        margin-top: 8px;
-    }
-    .info-box ul li strong {
-        color: #B45309;
-    }
-    
-    /* ===== TABLE MODERN ===== */
-    .table-modern {
-        background: #FFFFFF;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #E6E8EC;
-    }
-    .table-modern thead {
-        background: linear-gradient(135deg, #F3F4FF 0%, #FFFFFF 100%);
-        border-bottom: 2px solid #E6E8EC;
-    }
-    .table-modern thead th {
-        padding: 14px 20px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #6B7280;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    .table-modern tbody td {
-        padding: 16px 20px;
-        font-size: 0.85rem;
-        color: #0B0F19;
-        border-bottom: 1px solid #F0F2F5;
-        vertical-align: middle;
-    }
-    .table-modern tbody tr:last-child td {
-        border-bottom: none;
-    }
-    .table-modern tbody tr:hover {
-        background: #F9FAFB;
-    }
-    .table-modern code {
-        background: #F3F4FF;
-        color: #6366F1;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.8rem;
-    }
-    
-    /* ===== MODAL ===== */
-    .modal-custom .modal-content {
-        border: 1px solid #EEF0F4;
-        border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.12);
-    }
-    .modal-custom .modal-header {
-        border-bottom: 1px solid #F0F2F5;
-        padding: 18px 24px;
-    }
-    .modal-custom .modal-header .modal-title {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-weight: 700;
-        font-size: 1.05rem;
-        color: #0B0F19;
-    }
-    .modal-custom .modal-body {
-        padding: 22px 24px;
-    }
-    .modal-custom .modal-footer {
-        border-top: 1px solid #F0F2F5;
-        padding: 14px 24px;
-    }
-    
-    /* ===== CONTAINER ===== */
-    .settings-container {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-    
-    @media (max-width: 768px) {
-        .settings-card {
-            padding: 16px;
-        }
-        .settings-header h1 {
-            font-size: 1.1rem;
-        }
-        .settings-header .subtitle {
-            font-size: 0.7rem;
-        }
-        .device-status-box {
-            flex-wrap: wrap;
-        }
-        .device-status-box .status-meta {
-            margin-left: 0;
-            width: 100%;
-        }
-        .data-row {
-            flex-direction: column;
-            padding: 6px 0;
-        }
-        .data-row .label {
-            width: 100%;
-            font-size: 0.7rem;
-        }
-        .data-row .value {
-            font-size: 0.78rem;
-        }
-    }
 </style>
 
-<!-- ============================================================ -->
-<!-- HEADER                                                        -->
-<!-- ============================================================ -->
-<div class="settings-container">
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 settings-header">
-        <div>
-            <h1>⚙️ Pengaturan</h1>
-            <span class="subtitle">Kelola konfigurasi aplikasi dan integrasi perangkat</span>
-        </div>
-    </div>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 page-header">
+    <h1 class="h4 m-0">⚙️ Pengaturan</h1>
+</div>
 
-    <!-- ============================================================ -->
-    <!-- API CONFIG TABLE (FULL WIDTH - TOP)                          -->
-    <!-- ============================================================ -->
-    <div class="settings-card mb-4">
+<!-- API Config Card -->
+<div class="settings-card mb-4">
         <div class="card-title">
             <span class="title-left">
                 <i class="fas fa-plug"></i> Konfigurasi Fingerspot API
@@ -473,27 +300,27 @@
                 <tbody>
                     <tr>
                         <td><strong>API URL</strong></td>
-                        <td><code>{{ $settings['api_url'] }}</code></td>
+                        <td><code class="mono-code">{{ $settings['api_url'] }}</code></td>
                         <td style="text-align: right;">
-                            <button class="btn-custom btn-custom-sm btn-custom-outline" onclick="navigator.clipboard.writeText('{{ $settings['api_url'] }}')">
+                            <button class="btn-modern btn-modern-outline btn-modern-sm" onclick="navigator.clipboard.writeText('{{ $settings['api_url'] }}')">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </td>
                     </tr>
                     <tr>
                         <td><strong>API Key</strong></td>
-                        <td><code>{{ str_repeat('•', 16) }}</code></td>
+                        <td><code class="mono-code">{{ str_repeat('•', 16) }}</code></td>
                         <td style="text-align: right;">
-                            <button class="btn-custom btn-custom-sm btn-custom-outline" onclick="navigator.clipboard.writeText('{{ $settings['api_key'] }}')">
+                            <button class="btn-modern btn-modern-outline btn-modern-sm" onclick="navigator.clipboard.writeText('{{ $settings['api_key'] }}')">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </td>
                     </tr>
                     <tr>
                         <td><strong>Webhook URL</strong></td>
-                        <td><code>{{ $settings['webhook_url'] }}</code></td>
+                        <td><code class="mono-code">{{ $settings['webhook_url'] }}</code></td>
                         <td style="text-align: right;">
-                            <button class="btn-custom btn-custom-sm btn-custom-outline" onclick="navigator.clipboard.writeText('{{ $settings['webhook_url'] }}')">
+                            <button class="btn-modern btn-modern-outline btn-modern-sm" onclick="navigator.clipboard.writeText('{{ $settings['webhook_url'] }}')">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </td>
