@@ -193,6 +193,94 @@
         border-color: #E6E8EC;
         background: #FAFAFC;
     }
+    
+    /* PAGINATION CUSTOM */
+    .pagination-wrapper-custom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 16px 20px 8px;
+        border-top: 1px solid #E6E8EC;
+        background: #FAFAFC;
+        border-radius: 0 0 14px 14px;
+    }
+    
+    .pagination-info-custom {
+        font-size: 0.8rem;
+        color: #6B7280;
+        font-family: 'Inter', sans-serif;
+    }
+    .pagination-info-custom strong {
+        color: #0B0F19;
+        font-weight: 600;
+    }
+    
+    .pagination-custom {
+        display: flex;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        flex-wrap: wrap;
+    }
+    
+    .page-item-custom {
+        display: inline-block;
+    }
+    
+    .page-link-custom {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid #E6E8EC;
+        border-radius: 8px;
+        background: #FFFFFF;
+        color: #1F2937;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .page-link-custom:hover {
+        background: #F3F4FF;
+        border-color: #9FA1FF;
+        color: #6366F1;
+        text-decoration: none;
+    }
+    .page-item-custom.active .page-link-custom {
+        background: #6366F1;
+        border-color: #6366F1;
+        color: #FFFFFF;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+    .page-item-custom.disabled .page-link-custom {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    @media (max-width: 576px) {
+        .pagination-wrapper-custom {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            gap: 16px;
+        }
+        .pagination-custom {
+            justify-content: center;
+        }
+        .page-link-custom {
+            min-width: 32px;
+            height: 32px;
+            font-size: 0.7rem;
+            padding: 0 8px;
+        }
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4 page-header">
@@ -256,7 +344,52 @@
     </div>
 </div>
 
-<div class="mt-4 d-flex justify-content-center">
-    {{ $commandLogs->links() }}
+<!-- PAGINATION -->
+@if ($commandLogs->hasPages())
+<div class="pagination-wrapper-custom">
+    <div class="pagination-info-custom">
+        <span>
+            Menampilkan 
+            <strong>{{ $commandLogs->firstItem() }}</strong> 
+            - 
+            <strong>{{ $commandLogs->lastItem() }}</strong> 
+            dari 
+            <strong>{{ $commandLogs->total() }}</strong> 
+            data
+        </span>
+    </div>
+    <nav>
+        <ul class="pagination-custom">
+            @if ($commandLogs->onFirstPage())
+                <li class="page-item-custom disabled"><span class="page-link-custom"><i class="fas fa-chevron-left"></i></span></li>
+            @else
+                <li class="page-item-custom"><a class="page-link-custom" href="{{ $commandLogs->previousPageUrl() }}"><i class="fas fa-chevron-left"></i></a></li>
+            @endif
+
+            @php
+                $start = max(1, $commandLogs->currentPage() - 2);
+                $end = min($commandLogs->lastPage(), $commandLogs->currentPage() + 2);
+                if ($start > 1) {
+                    echo '<li class="page-item-custom"><a class="page-link-custom" href="' . $commandLogs->url(1) . '">1</a></li>';
+                    if ($start > 2) echo '<li class="page-item-custom disabled"><span class="page-link-custom">…</span></li>';
+                }
+                for ($i = $start; $i <= $end; $i++) {
+                    $active = $i == $commandLogs->currentPage() ? 'active' : '';
+                    echo '<li class="page-item-custom ' . $active . '"><a class="page-link-custom" href="' . $commandLogs->url($i) . '">' . $i . '</a></li>';
+                }
+                if ($end < $commandLogs->lastPage()) {
+                    if ($end < $commandLogs->lastPage() - 1) echo '<li class="page-item-custom disabled"><span class="page-link-custom">…</span></li>';
+                    echo '<li class="page-item-custom"><a class="page-link-custom" href="' . $commandLogs->url($commandLogs->lastPage()) . '">' . $commandLogs->lastPage() . '</a></li>';
+                }
+            @endphp
+
+            @if ($commandLogs->hasMorePages())
+                <li class="page-item-custom"><a class="page-link-custom" href="{{ $commandLogs->nextPageUrl() }}"><i class="fas fa-chevron-right"></i></a></li>
+            @else
+                <li class="page-item-custom disabled"><span class="page-link-custom"><i class="fas fa-chevron-right"></i></span></li>
+            @endif
+        </ul>
+    </nav>
 </div>
+@endif
 @endsection
