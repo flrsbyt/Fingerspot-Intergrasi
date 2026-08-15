@@ -144,10 +144,28 @@
         font-size: 0.75rem;
         font-weight: 600;
     }
-    
+
     .badge-modern-danger {
         background: #FEE2E2;
         color: #DC2626;
+        padding: 4px 12px;
+        border-radius: 100px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-modern-warning {
+        background: #FEF3C7;
+        color: #D97706;
+        padding: 4px 12px;
+        border-radius: 100px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-modern-info {
+        background: #DBEAFE;
+        color: #2563EB;
         padding: 4px 12px;
         border-radius: 100px;
         font-size: 0.75rem;
@@ -428,7 +446,16 @@
                         </span>
                     </td>
                     <td>
-                        <span class="{{ $log->status == 'check-in' ? 'badge-modern-success' : 'badge-modern-danger' }}">
+                        @php
+                            $statusClasses = [
+                                'check-in' => 'badge-modern-success',
+                                'check-out' => 'badge-modern-danger',
+                                'break-in' => 'badge-modern-warning',
+                                'break-out' => 'badge-modern-info',
+                            ];
+                            $statusClass = $statusClasses[$log->status] ?? 'badge-modern-info';
+                        @endphp
+                        <span class="{{ $statusClass }}">
                             {{ $log->status }}
                         </span>
                     </td>
@@ -643,7 +670,14 @@ function createAttlogRow(attlog, index) {
     };
     const verify = verifyMethods[attlog.verify] || {icon: 'fa-question', label: 'Unknown', color: '#6B7280'};
     
-    const statusClass = attlog.status === 'check-in' ? 'badge-modern-success' : 'badge-modern-danger';
+    const statusClasses = {
+        'check-in': 'badge-modern-success',
+        'check-out': 'badge-modern-danger',
+        'break-in': 'badge-modern-warning',
+        'break-out': 'badge-modern-info',
+    };
+    const statusClass = statusClasses[attlog.status] || 'badge-modern-info';
+    
     const scanTime = new Date(attlog.scan_time).toLocaleString('en-GB', {
         day: '2-digit',
         month: 'short',
