@@ -398,57 +398,37 @@
     }
 </style>
 
-<!-- Header dengan Total + Reload -->
+<!-- Header dengan Total -->
 <div class="d-flex justify-content-between align-items-center mb-4 page-header">
     <h1 class="h4 m-0">🔑 Manajemen Perangkat</h1>
     <div class="header-right">
         <span class="total-badge">Total: {{ $pins->total() }}</span>
-        <span class="badge-mini {{ $deviceOnline ? 'badge-mini-success' : 'badge-mini-danger' }}">
-            {{ $deviceOnline ? 'Online' : 'Offline' }}
-        </span>
-        <button type="button" class="btn-modern btn-modern-primary btn-modern-sm" data-bs-toggle="modal" data-bs-target="#tambahDeviceModal">
-            <i class="fas fa-plus"></i> Tambah
-        </button>
     </div>
 </div>
 
-<!-- Command Panel -->
+<!-- Command Panel - Tambah Mesin Absensi -->
 <div class="command-panel mb-4">
-    <div class="row g-3 align-items-end">
-        <div class="col-md-12">
-            <form method="GET" class="row g-2 mb-3">
-                <div class="col-md-3">
-                    <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Mesin Absensi</label>
-                    <select name="device" class="form-control form-control-modern">
-                        <option value="">-- Semua Mesin --</option>
-                        @php
-                            $devices = App\Models\Pin::where('is_active', true)->get();
-                        @endphp
-                        @foreach($devices as $device)
-                            <option value="{{ $device->pin }}" {{ request('device') == $device->pin ? 'selected' : '' }}>
-                                {{ $device->device_name }} ({{ $device->pin }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Cari Cloud ID</label>
-                    <input type="text" name="pin" class="form-control form-control-modern" placeholder="Masukkan Cloud ID..." value="{{ request('pin') }}">
-                </div>
-                <div class="col-md-2">
-                    <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">&nbsp;</label>
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn-modern btn-modern-primary w-100">
-                            <i class="fas fa-filter"></i> Filter
-                        </button>
-                        <a href="{{ route('pins.index') }}" class="btn-modern btn-modern-outline" style="min-width: 42px;" title="Reset Filter">
-                            <i class="fas fa-undo"></i>
-                        </a>
-                    </div>
-                </div>
-            </form>
+    <form action="{{ route('settings.add-device') }}" method="POST">
+        @csrf
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label form-label-modern">Cloud ID *</label>
+                <input type="text" name="pin" class="form-control form-control-modern" placeholder="Contoh: ABC123XYZ" required>
+                <small class="text-muted" style="font-size: 0.75rem;">ID Cloud dari Fingerspot</small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label form-label-modern">Nama Perangkat *</label>
+                <input type="text" name="device_name" class="form-control form-control-modern" placeholder="Contoh: Mesin Kantor Pusat" required>
+                <small class="text-muted" style="font-size: 0.75rem;">Nama untuk identifikasi</small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label form-label-modern">&nbsp;</label>
+                <button type="submit" class="btn-modern btn-modern-success w-100">
+                    <i class="fas fa-plus"></i> Tambah Perangkat
+                </button>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <!-- Tabel -->
@@ -461,7 +441,6 @@
                     <th>Cloud ID</th>
                     <th>Device Name</th>
                     <th>Device SN</th>
-                    <th style="width: 100px;">Status</th>
                     <th style="width: 80px;">Aksi</th>
                 </tr>
             </thead>
@@ -472,11 +451,6 @@
                     <td><span class="mono-code">{{ $pin->pin }}</span></td>
                     <td>{{ $pin->device_name ?? '-' }}</td>
                     <td>{{ $pin->device_sn ?? '-' }}</td>
-                    <td>
-                        <span class="{{ $pin->is_active ? 'badge-modern-success' : 'badge-modern-danger' }}">
-                            {{ $pin->is_active ? 'Online' : 'Offline' }}
-                        </span>
-                    </td>
                     <td>
                         <form action="{{ route('pins.destroy', $pin->id) }}" method="POST" style="display: inline;">
                             @csrf
@@ -489,7 +463,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-4">
+                    <td colspan="5" class="text-center text-muted py-4">
                         <i class="fa-regular fa-database me-2"></i> Belum ada data PIN
                     </td>
                 </tr>
@@ -548,38 +522,6 @@
 </div>
 @endif
 
-<!-- Modal Tambah Device -->
-<div class="modal fade modal-modern" id="tambahDeviceModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="{{ route('settings.add-device') }}" method="POST">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">➕ Tambah Mesin Absensi Baru</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label form-label-modern">Cloud ID *</label>
-                        <input type="text" name="pin" class="form-control form-control-modern" placeholder="Contoh: ABC123XYZ" required>
-                        <small class="text-muted" style="font-size: 0.75rem;">ID Cloud dari Fingerspot</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label form-label-modern">Nama Perangkat *</label>
-                        <input type="text" name="device_name" class="form-control form-control-modern" placeholder="Contoh: Mesin Kantor Pusat" required>
-                        <small class="text-muted" style="font-size: 0.75rem;">Nama untuk identifikasi</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-modern btn-modern-outline" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn-modern btn-modern-success">
-                        <i class="fas fa-plus"></i> Tambah Perangkat
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <script>
 // Show toast notification
