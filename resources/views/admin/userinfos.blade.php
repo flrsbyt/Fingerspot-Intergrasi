@@ -303,7 +303,7 @@
     </div>
 </div>
 
-<!-- Command Panel -->
+<!-- Command Panel Filter -->
 <div class="command-panel mb-4">
     <div class="row g-3 align-items-end">
         <div class="col-md-12">
@@ -348,6 +348,103 @@
                     </a>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Device Control Panel -->
+<div class="command-panel mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 style="font-size: 0.85rem; font-weight: 600; margin: 0;">Kontrol Mesin Absensi</h6>
+    </div>
+    
+    <!-- Device Selection -->
+    <div class="mb-3">
+        <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: #374151;">Pilih Mesin</label>
+        <select id="controlDevice" class="form-control form-control-modern">
+            <option value="">-- Pilih Mesin --</option>
+            @php
+                $devices = App\Models\Pin::where('is_active', true)->get();
+            @endphp
+            @foreach($devices as $device)
+                <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+            @endforeach
+        </select>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row g-2">
+        <div class="col-md-6">
+            <button type="button" class="btn-modern btn-modern-primary w-100" onclick="getAllPin(this)">
+                <i class="fas fa-key me-2"></i> Ambil Semua PIN
+            </button>
+        </div>
+        <div class="col-md-6">
+            <div class="input-group">
+                <select id="userinfoPin" class="form-control form-control-modern" required>
+                    <option value="">-- Pilih User --</option>
+                    @php
+                        $existingUserinfos = App\Models\Userinfo::all();
+                        $allDevices = App\Models\Pin::where('is_active', true)->get();
+                    @endphp
+                    <optgroup label="User yang sudah ada di database">
+                        @foreach($existingUserinfos as $userinfo)
+                            <option value="{{ $userinfo->pin }}">{{ $userinfo->name }} ({{ $userinfo->pin }})</option>
+                        @endforeach
+                    </optgroup>
+                    <optgroup label="PIN dari mesin (jika ada)">
+                        @foreach($allDevices as $device)
+                            <option value="{{ $device->pin }}">{{ $device->device_name }} - PIN: {{ $device->pin }}</option>
+                        @endforeach
+                    </optgroup>
+                </select>
+                <button type="button" class="btn-modern btn-modern-success" onclick="getUserinfo(this)">
+                    <i class="fas fa-users me-2"></i> Get Userinfo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register User Online -->
+    <div class="mt-3 pt-3" style="border-top: 1px solid #E6E8EC;">
+        <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; color: #374151;">Register User Online</label>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <input type="text" id="registerPin" class="form-control form-control-modern" placeholder="PIN" required>
+            </div>
+            <div class="col-md-3">
+                <select id="registerVerification" class="form-control form-control-modern" required>
+                    <option value="">Tipe Biometrik</option>
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="12">12 (Wajah)</option>
+                    <option value="13">13 (Vein)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select id="registerDevice" class="form-control form-control-modern" required>
+                    <option value="">Pilih Mesin</option>
+                    @php
+                        $devices = App\Models\Pin::where('is_active', true)->get();
+                    @endphp
+                    @foreach($devices as $device)
+                        <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn-modern btn-modern-success w-100" onclick="registerOnline(this)">
+                    <i class="fas fa-plus"></i> Register
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -447,6 +544,145 @@
 @endif
 
 <script>
+
+// ============================================
+// DEVICE CONTROL FUNCTIONS
+// ============================================
+
+// 1. Get All PIN
+function getAllPin(btn) {
+    const deviceId = document.getElementById('controlDevice').value;
+    
+    if (!deviceId) {
+        showToast('❌ Silakan pilih mesin terlebih dahulu', 'error');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+    
+    fetch('{{ route("command.get-all-pin") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ device: deviceId })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ ' + result.message, 'success');
+        } else {
+            showToast('❌ ' + result.message, 'error');
+        }
+    })
+    .catch(() => {
+        showToast('❌ Gagal terhubung ke server', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-key me-2"></i> Ambil Semua PIN';
+    });
+}
+
+// 2. Get Userinfo
+function getUserinfo(btn) {
+    const deviceId = document.getElementById('controlDevice').value;
+    const pinInput = document.getElementById('userinfoPin');
+    const pin = pinInput ? pinInput.value.trim() : 'all';
+    
+    if (!deviceId) {
+        showToast('❌ Silakan pilih mesin terlebih dahulu', 'error');
+        return;
+    }
+    
+    if (!pin) {
+        showToast('❌ Silakan pilih user terlebih dahulu', 'error');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+    
+    fetch('{{ route("command.get-userinfo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ device: deviceId, pin: pin })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ ' + result.message, 'success');
+        } else {
+            showToast('❌ ' + result.message, 'error');
+        }
+    })
+    .catch(() => {
+        showToast('❌ Gagal terhubung ke server', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-users me-2"></i> Get Userinfo';
+    });
+}
+
+// 3. Register Online
+function registerOnline(btn) {
+    const pin = document.getElementById('registerPin').value;
+    const verification = document.getElementById('registerVerification').value;
+    const device = document.getElementById('registerDevice').value;
+    
+    console.log('Register Online Data:', { pin, verification, device });
+    
+    if (!pin || !verification || !device) {
+        showToast('⚠️ Semua field wajib diisi!', 'warning');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+    
+    fetch('{{ route("command.register-online") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ device: device, pin: pin, verification: verification })
+    })
+    .then(response => response.json())
+    .then(result => {
+        console.log('Register Online Response:', result);
+        if (result.success) {
+            showToast('✅ ' + result.message, 'success');
+            document.getElementById('registerPin').value = '';
+            document.getElementById('registerVerification').value = '';
+        } else {
+            showToast('❌ ' + result.message, 'error');
+            alert('Error: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Register Online Error:', error);
+        showToast('❌ Gagal terhubung ke server', 'error');
+        alert('Error: ' + error.message);
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus"></i> Register';
+    });
+}
+
+// ============================================
+// USER MANAGEMENT FUNCTIONS
+// ============================================
 
 function hapusUser(btn, pin) {
     if (!confirm(`Yakin hapus user dengan PIN ${pin} dari mesin?`)) return;
