@@ -66,9 +66,12 @@ class CommandPanelController extends Controller
     public function getUserinfo(Request $request)
     {
         $cloudId = $request->input('device');
-        $params = [
-            'pin' => $request->input('pin', 'all'),
-        ];
+        $pin = $request->input('pin', 'all');
+
+        \Log::info('Get Userinfo Request', [
+            'cloud_id' => $cloudId,
+            'pin' => $pin,
+        ]);
 
         if (empty($cloudId)) {
             return response()->json([
@@ -77,58 +80,75 @@ class CommandPanelController extends Controller
             ]);
         }
 
-        $apiRequest = ApiRequest::create([
-            'command' => 'Get Userinfo',
-            'payload' => array_merge(['cloud_id' => $cloudId], $params),
-            'status' => 'pending',
-            'request_id' => 'req_' . uniqid(),
-        ]);
+        try {
+            $apiRequest = ApiRequest::create([
+                'command' => 'Get Userinfo',
+                'payload' => ['cloud_id' => $cloudId, 'pin' => $pin],
+                'status' => 'pending',
+                'request_id' => 'req_' . uniqid(),
+            ]);
 
-        $result = $this->fingerspot->getUserinfo($cloudId, $params);
+            $result = $this->fingerspot->getUserinfo($cloudId, ['pin' => $pin]);
 
-        $apiRequest->update([
-            'status' => $result['success'] ? 'success' : 'failed',
-            'response' => $result,
-        ]);
+            \Log::info('Get Userinfo API Result', [
+                'result' => $result,
+            ]);
 
-        // Log detailed response for debugging
-        \Log::info('Get Userinfo Result', [
-            'cloud_id' => $cloudId,
-            'success' => $result['success'] ?? false,
-            'status_code' => $result['status_code'] ?? null,
-            'data' => $result['data'] ?? null,
-            'raw' => $result['raw'] ?? null,
-        ]);
+            $apiRequest->update([
+                'status' => $result['success'] ? 'success' : 'failed',
+                'response' => $result,
+            ]);
 
-        // API mengembalikan success tapi data dikirim via webhook
-        if ($result['success']) {
+            // Log detailed response for debugging
+            \Log::info('Get Userinfo Result', [
+                'cloud_id' => $cloudId,
+                'success' => $result['success'] ?? false,
+                'status_code' => $result['status_code'] ?? null,
+                'data' => $result['data'] ?? null,
+                'raw' => $result['raw'] ?? null,
+            ]);
+
+            // API mengembalikan success tapi data dikirim via webhook
+            if ($result['success']) {
+                CommandLog::create([
+                    'command' => 'Get Userinfo',
+                    'parameters' => ['cloud_id' => $cloudId, 'pin' => $pin],
+                    'status' => 'executed',
+                    'message' => 'Permintaan get userinfo berhasil dikirim. Data akan dikirim via webhook.',
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => '✅ Permintaan get userinfo berhasil dikirim. Data akan dikirim via webhook ke sistem secara otomatis.',
+                    'data' => $result,
+                    'note' => 'Data user akan muncul di halaman Data Userinfo setelah diterima via webhook.',
+                ]);
+            }
+
             CommandLog::create([
                 'command' => 'Get Userinfo',
-                'parameters' => array_merge(['cloud_id' => $cloudId], $params),
-                'status' => 'executed',
-                'message' => 'Permintaan berhasil dikirim. Data user akan dikirim via webhook.',
+                'parameters' => ['cloud_id' => $cloudId, 'pin' => $pin],
+                'status' => 'failed',
+                'message' => 'Gagal mengirim permintaan get userinfo: ' . ($result['message'] ?? 'Unknown error'),
             ]);
 
             return response()->json([
-                'success' => true,
-                'message' => '✅ Permintaan berhasil dikirim. Data user akan dikirim via webhook ke sistem secara otomatis.',
-                'data' => $result,
-                'note' => 'Data akan muncul di halaman Data Userinfo setelah diterima via webhook.',
+                'success' => false,
+                'message' => '❌ Gagal mengirim permintaan get userinfo: ' . ($result['message'] ?? 'Unknown error'),
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Get Userinfo Exception', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => '❌ Exception: ' . $e->getMessage(),
+                'data' => ['error' => $e->getMessage()]
             ]);
         }
-
-        CommandLog::create([
-            'command' => 'Get Userinfo',
-            'parameters' => array_merge(['cloud_id' => $cloudId], $params),
-            'status' => 'failed',
-            'message' => 'Gagal mengirim permintaan: ' . ($result['message'] ?? 'Unknown error'),
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => '❌ Gagal mengirim permintaan: ' . ($result['message'] ?? 'Unknown error'),
-            'data' => $result
-        ]);
     }
 
     // 3. Set Userinfo
