@@ -514,6 +514,20 @@
         </div>
 
         <div class="row g-3 align-items-end">
+            {{-- Device Selection --}}
+            <div class="col-md-3">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Pilih Mesin *</label>
+                <select id="controlDevice" class="form-control" style="font-size: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;" required>
+                    <option value="">-- Pilih Mesin --</option>
+                    @php
+                        $devices = App\Models\Pin::where('is_active', true)->get();
+                    @endphp
+                    @foreach($devices as $device)
+                        <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                    @endforeach
+                </select>
+            </div>
+
             {{-- Ambil Semua PIN --}}
             <div class="col-md-3">
                 <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Sinkronisasi Data</label>
@@ -650,10 +664,10 @@
 
 // 1. Get All PIN
 function getAllPin(btn) {
-    const deviceId = prompt('Masukkan Cloud ID mesin:');
+    const deviceId = document.getElementById('controlDevice').value;
     
     if (!deviceId) {
-        showToast('❌ Cloud ID mesin wajib diisi', 'error');
+        showToast('❌ Silakan pilih mesin terlebih dahulu', 'error');
         return;
     }
     
@@ -688,10 +702,10 @@ function getAllPin(btn) {
 
 // 2. Get Userinfo
 function getUserinfo(btn) {
-    const deviceId = prompt('Masukkan Cloud ID mesin:');
+    const deviceId = document.getElementById('controlDevice').value;
     
     if (!deviceId) {
-        showToast('❌ Cloud ID mesin wajib diisi', 'error');
+        showToast('❌ Silakan pilih mesin terlebih dahulu', 'error');
         return;
     }
     
@@ -726,10 +740,10 @@ function getUserinfo(btn) {
 
 // 3. Set Time
 function setTime(btn) {
-    const deviceId = prompt('Masukkan Cloud ID mesin:');
+    const deviceId = document.getElementById('controlDevice').value;
     
     if (!deviceId) {
-        showToast('❌ Cloud ID mesin wajib diisi', 'error');
+        showToast('❌ Silakan pilih mesin terlebih dahulu', 'error');
         return;
     }
     
@@ -772,10 +786,10 @@ function setTime(btn) {
 
 // 4. Restart Mesin
 function restartMesin(btn) {
-    const deviceId = prompt('Masukkan Cloud ID mesin:');
+    const deviceId = document.getElementById('controlDevice').value;
     
     if (!deviceId) {
-        showToast('❌ Cloud ID mesin wajib diisi', 'error');
+        showToast('❌ Silakan pilih mesin terlebih dahulu', 'error');
         return;
     }
     

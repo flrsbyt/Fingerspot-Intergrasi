@@ -8,6 +8,10 @@
     <span class="text-muted">Kirim perintah ke mesin Fingerspot</span>
 </div>
 
+@php
+    $devices = \App\Models\Pin::where('is_active', true)->get();
+@endphp
+
 @if(session('message'))
     <div class="alert alert-info alert-dismissible fade show">
         {{ session('message') }}
@@ -23,6 +27,14 @@
             <p class="small text-muted">Ambil data absensi dari mesin</p>
             <form action="{{ route('command.get-attlog') }}" method="POST">
                 @csrf
+                <div class="mb-2">
+                    <select name="device" class="form-control form-control-sm" required>
+                        <option value="">Pilih Mesin *</option>
+                        @foreach($devices as $device)
+                            <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="row g-2">
                     <div class="col-6">
                         <input type="date" name="start_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
@@ -48,6 +60,14 @@
             <p class="small text-muted">Ambil data user dari mesin</p>
             <form action="{{ route('command.get-userinfo') }}" method="POST">
                 @csrf
+                <div class="mb-2">
+                    <select name="device" class="form-control form-control-sm" required>
+                        <option value="">Pilih Mesin *</option>
+                        @foreach($devices as $device)
+                            <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                        @endforeach
+                    </select>
+                </div>
                 <input type="text" name="pin" class="form-control form-control-sm" placeholder="PIN (kosongkan untuk semua)">
                 <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">
                     <i class="fas fa-users"></i> Ambil User
@@ -63,6 +83,14 @@
             <p class="small text-muted">Kirim data user ke mesin</p>
             <form action="{{ route('command.set-userinfo') }}" method="POST">
                 @csrf
+                <div class="mb-2">
+                    <select name="device" class="form-control form-control-sm" required>
+                        <option value="">Pilih Mesin *</option>
+                        @foreach($devices as $device)
+                            <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                        @endforeach
+                    </select>
+                </div>
                 <input type="text" name="pin" class="form-control form-control-sm mb-1" placeholder="PIN *" required>
                 <input type="text" name="name" class="form-control form-control-sm mb-1" placeholder="Nama *" required>
                 <input type="text" name="department" class="form-control form-control-sm mb-1" placeholder="Department">
@@ -82,6 +110,14 @@
             <p class="small text-muted">Hapus data user dari mesin</p>
             <form action="{{ route('command.delete-userinfo') }}" method="POST">
                 @csrf
+                <div class="mb-2">
+                    <select name="device" class="form-control form-control-sm" required>
+                        <option value="">Pilih Mesin *</option>
+                        @foreach($devices as $device)
+                            <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                        @endforeach
+                    </select>
+                </div>
                 <input type="text" name="pin" class="form-control form-control-sm" placeholder="PIN *" required>
                 <button type="submit" class="btn btn-danger btn-sm w-100 mt-2">
                     <i class="fas fa-trash"></i> Hapus User
@@ -97,6 +133,14 @@
             <p class="small text-muted">Ambil semua User ID dari mesin</p>
             <form action="{{ route('command.get-all-pin') }}" method="POST">
                 @csrf
+                <div class="mb-2">
+                    <select name="device" class="form-control form-control-sm" required>
+                        <option value="">Pilih Mesin *</option>
+                        @foreach($devices as $device)
+                            <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                        @endforeach
+                    </select>
+                </div>
                 <button type="submit" class="btn btn-primary btn-sm w-100">
                     <i class="fas fa-key"></i> Ambil PIN
                 </button>
@@ -111,6 +155,14 @@
             <p class="small text-muted">Ubah waktu/timezone mesin</p>
             <form action="{{ route('command.set-time') }}" method="POST">
                 @csrf
+                <div class="mb-2">
+                    <select name="device" class="form-control form-control-sm" required>
+                        <option value="">Pilih Mesin *</option>
+                        @foreach($devices as $device)
+                            <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                        @endforeach
+                    </select>
+                </div>
                 <input type="datetime-local" name="timezone" class="form-control form-control-sm" value="{{ date('Y-m-d\TH:i') }}">
                 <button type="submit" class="btn btn-warning btn-sm w-100 mt-2">
                     <i class="fas fa-clock"></i> Set Time
@@ -126,6 +178,14 @@
             <p class="small text-muted">Registrasi user ke mesin</p>
             <form action="{{ route('command.register-online') }}" method="POST">
                 @csrf
+                <div class="mb-2">
+                    <select name="device" class="form-control form-control-sm" required>
+                        <option value="">Pilih Mesin *</option>
+                        @foreach($devices as $device)
+                            <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                        @endforeach
+                    </select>
+                </div>
                 <input type="text" name="pin" class="form-control form-control-sm mb-1" placeholder="PIN *" required>
                 <input type="text" name="name" class="form-control form-control-sm mb-1" placeholder="Nama *" required>
                 <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">
@@ -142,6 +202,14 @@
             <p class="small text-muted">Restart mesin Fingerspot</p>
             <form action="{{ route('command.restart-mesin') }}" method="POST">
                 @csrf
+                <div class="mb-2">
+                    <select name="device" class="form-control form-control-sm" required>
+                        <option value="">Pilih Mesin *</option>
+                        @foreach($devices as $device)
+                            <option value="{{ $device->pin }}">{{ $device->device_name }} ({{ $device->pin }})</option>
+                        @endforeach
+                    </select>
+                </div>
                 <button type="submit" class="btn btn-danger btn-sm w-100" onclick="return confirm('Yakin mau restart mesin?')">
                     <i class="fas fa-power-off"></i> Restart
                 </button>
