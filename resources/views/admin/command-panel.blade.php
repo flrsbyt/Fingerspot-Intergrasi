@@ -10,6 +10,8 @@
 
 @php
     $devices = \App\Models\Pin::where('is_active', true)->get();
+    $existingUserinfos = \App\Models\Userinfo::all();
+    $allPins = \App\Models\Pin::where('is_active', true)->pluck('pin', 'device_name')->toArray();
 @endphp
 
 @if(session('message'))
@@ -68,7 +70,21 @@
                         @endforeach
                     </select>
                 </div>
-                <input type="text" name="pin" class="form-control form-control-sm" placeholder="PIN (kosongkan untuk semua)">
+                <div class="mb-2">
+                    <select name="pin" class="form-control form-control-sm" id="userinfoPinSelect">
+                        <option value="">Semua User</option>
+                        <optgroup label="User yang sudah ada di database">
+                            @foreach($existingUserinfos as $userinfo)
+                                <option value="{{ $userinfo->pin }}">{{ $userinfo->name }} ({{ $userinfo->pin }})</option>
+                            @endforeach
+                        </optgroup>
+                        <optgroup label="PIN dari mesin (jika ada)">
+                            @foreach($devices as $device)
+                                <option value="{{ $device->pin }}">{{ $device->device_name }} - PIN: {{ $device->pin }}</option>
+                            @endforeach
+                        </optgroup>
+                    </select>
+                </div>
                 <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">
                     <i class="fas fa-users"></i> Ambil User
                 </button>

@@ -76,19 +76,20 @@ class FingerspotService
 
     {
 
-        $defaultParams = [
+        // Handle empty or 'all' pin parameter
+        $pin = $params['pin'] ?? 'all';
 
-            'pin' => 'all',
+        if (empty($pin) || $pin === 'all') {
+            $pin = 'all';
+        }
 
-        ];
+        Log::info('FingerspotService getUserinfo', [
+            'cloud_id' => $cloudId,
+            'pin' => $pin,
+            'original_params' => $params,
+        ]);
 
-
-
-        $params = array_merge($defaultParams, $params);
-
-
-
-        return $this->sendRequest($cloudId, 'get_userinfo', $params);
+        return $this->sendRequest($cloudId, 'get_userinfo', ['pin' => $pin]);
 
     }
 

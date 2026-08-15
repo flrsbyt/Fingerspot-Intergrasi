@@ -536,7 +536,23 @@
             </div>
             <div class="col-md-6">
                 <div class="input-group">
-                    <input type="text" id="userinfoPin" class="form-control" style="font-size: 0.9rem; border: 1px solid #E5E7EB; border-radius: 8px 0 0 8px; padding: 10px 14px;" placeholder="PIN (kosongkan untuk semua)">
+                    <select id="userinfoPin" class="form-control" style="font-size: 0.9rem; border: 1px solid #E5E7EB; border-radius: 8px 0 0 8px; padding: 10px 14px;">
+                        <option value="">Semua User</option>
+                        @php
+                            $existingUserinfos = App\Models\Userinfo::all();
+                            $allDevices = App\Models\Pin::where('is_active', true)->get();
+                        @endphp
+                        <optgroup label="User yang sudah ada di database">
+                            @foreach($existingUserinfos as $userinfo)
+                                <option value="{{ $userinfo->pin }}">{{ $userinfo->name }} ({{ $userinfo->pin }})</option>
+                            @endforeach
+                        </optgroup>
+                        <optgroup label="PIN dari mesin (jika ada)">
+                            @foreach($allDevices as $device)
+                                <option value="{{ $device->pin }}">{{ $device->device_name }} - PIN: {{ $device->pin }}</option>
+                            @endforeach
+                        </optgroup>
+                    </select>
                     <button type="button" class="btn-custom btn-custom-success" style="border-radius: 0 8px 8px 0;" onclick="getUserinfo(this)">
                         <i class="fas fa-users me-2"></i> Get Userinfo
                     </button>

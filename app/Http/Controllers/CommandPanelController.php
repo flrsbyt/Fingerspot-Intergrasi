@@ -68,9 +68,15 @@ class CommandPanelController extends Controller
         $cloudId = $request->input('device');
         $pin = $request->input('pin', 'all');
 
+        // Handle empty pin - set to 'all' if empty
+        if (empty($pin) || $pin === '') {
+            $pin = 'all';
+        }
+
         \Log::info('Get Userinfo Request', [
             'cloud_id' => $cloudId,
             'pin' => $pin,
+            'pin_type' => gettype($pin),
             'all_request_data' => $request->all(),
         ]);
 
