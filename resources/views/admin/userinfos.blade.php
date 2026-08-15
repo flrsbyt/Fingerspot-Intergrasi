@@ -381,27 +381,12 @@
         </div>
         <div class="col-md-6">
             <div class="input-group">
-                <select id="userinfoPin" class="form-control form-control-modern" required>
-                    <option value="">-- Pilih User --</option>
-                    @php
-                        $existingUserinfos = App\Models\Userinfo::all();
-                        $allDevices = App\Models\Pin::where('is_active', true)->get();
-                    @endphp
-                    <optgroup label="User yang sudah ada di database">
-                        @foreach($existingUserinfos as $userinfo)
-                            <option value="{{ $userinfo->pin }}">{{ $userinfo->name }} ({{ $userinfo->pin }})</option>
-                        @endforeach
-                    </optgroup>
-                    <optgroup label="PIN dari mesin (jika ada)">
-                        @foreach($allDevices as $device)
-                            <option value="{{ $device->pin }}">{{ $device->device_name }} - PIN: {{ $device->pin }}</option>
-                        @endforeach
-                    </optgroup>
-                </select>
+                <input type="text" id="userinfoPin" class="form-control form-control-modern" placeholder="Masukkan PIN" required>
                 <button type="button" class="btn-modern btn-modern-success" onclick="getUserinfo(this)">
                     <i class="fas fa-users me-2"></i> Get Userinfo
                 </button>
             </div>
+            <small class="text-muted" style="font-size: 0.7rem;">Masukkan PIN user (lihat di data attlog)</small>
         </div>
     </div>
 
